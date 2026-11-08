@@ -142,7 +142,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
 <div id="flash" aria-hidden="true"></div>
 
 <div class="top">
-  <span class="brand">Prateleira<span class="ver">v8</span></span>
+  <span class="brand">Prateleira<span class="ver">v9</span></span>
   <div class="seg" role="group" aria-label="Modo da IA">
     <button type="button" id="mFast" aria-pressed="true">Rápido</button>
     <button type="button" id="mPrecise" aria-pressed="false">Preciso</button>
@@ -198,6 +198,18 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   let wakeLock = null;
 
   try { code = localStorage.getItem("prateleira-chave-gemini") || ""; } catch (e) {}
+  // Link de teste: a chave pode vir no final do endereço (#chave=...). Ela é guardada neste
+  // aparelho e apagada do endereço na hora, para não ficar visível nem ser repassada sem querer.
+  (function readKeyFromLink() {
+    const m = /(?:^#|&)chave=([^&]+)/.exec(location.hash || "");
+    if (!m) return;
+    const k = decodeURIComponent(m[1]).trim();
+    if (k) {
+      code = k;
+      try { localStorage.setItem("prateleira-chave-gemini", k); } catch (e) {}
+    }
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+  })();
   try { mode = localStorage.getItem("prateleira-modo") || "rapido"; } catch (e) {}
 
   function setMode(m) {
