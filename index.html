@@ -66,6 +66,13 @@ body.card-on #hint { opacity: 0; }
 }
 #tagf .nm { font-size: 12px; color: #d4ded8; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 #tagf .best { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1; color: var(--tag); font-variant-numeric: tabular-nums; }
+#tapStart {
+  position: fixed; inset: 0; width: 100%; border: 0; appearance: none; cursor: pointer;
+  background: rgba(11,16,13,0.45); color: var(--ink); font: 700 28px var(--font-display);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+}
+#tapStart span { font: 400 15px var(--font-body); color: #d4ded8; }
+.ver { font: 500 11px var(--font-body); color: var(--muted); margin-left: 6px; }
 #tagf .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 #tagf .row .st { font-size: 14px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #tagf .row .pr { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.05; color: var(--tag); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -135,7 +142,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
 <div id="flash" aria-hidden="true"></div>
 
 <div class="top">
-  <span class="brand">Prateleira</span>
+  <span class="brand">Prateleira<span class="ver">v7</span></span>
   <div class="seg" role="group" aria-label="Modo da IA">
     <button type="button" id="mFast" aria-pressed="true">Rápido</button>
     <button type="button" id="mPrecise" aria-pressed="false">Preciso</button>
@@ -144,6 +151,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
 <button type="button" id="sndBtn" class="snd" aria-pressed="true">Bip ligado</button>
 <div id="hint">Mire num produto e pare um instante</div>
 <div id="toast" role="status" hidden></div>
+<button type="button" id="tapStart" hidden>Toque na tela para começar<span>ativa o bip de produto encontrado</span></button>
 <button type="button" id="tagf" aria-live="polite" hidden></button>
 <div id="card"></div>
 
@@ -222,7 +230,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       $("startScreen").hidden = true;
       try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
       requestAnimationFrame(loop);
-      setTimeout(() => { if (soundOn && !audioReady) toast("Toque uma vez na tela para ativar o bip.", 5000); }, 800);
+      if (soundOn && !audioReady) $("tapStart").hidden = false;
       loadModels().catch((e) => { if (e && e.kind === "key") askCode("A chave não foi aceita pelo Google. Confira e cole de novo."); });
       return true;
     } catch (e) {
@@ -266,7 +274,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     if (m > MOVE_LEVEL) {
       stillSince = 0;
       needMove = false;
-      if (!busy) { reticle.className = ""; hideBox(); hideTag(); hint.textContent = "Mire num produto e pare um instante"; }
+      if (!busy) { reticle.className = ""; hideBox(); dimTag(); hint.textContent = "Mire num produto e pare um instante"; }
       return;
     }
     if (m < STILL_LEVEL) {
@@ -448,16 +456,17 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     } else if (!String(r.produto).toLowerCase().replace(/\s/g, "").includes(tam.toLowerCase().replace(/\s/g, ""))) {
       r.produto = String(r.produto).trim() + " " + tam;
     }
-    if (last && last.produto === r.produto && !r.preco_etiqueta && last.preco_etiqueta) r.preco_etiqueta = last.preco_etiqueta;
+    const same = !!(last && last.produto === r.produto);
+    if (same && !r.preco_etiqueta && last.preco_etiqueta) r.preco_etiqueta = last.preco_etiqueta;
     last = r;
     showBox(r.caixa);
     renderCard(r, ms);
-    signal(r.confianca === "alta" ? "ok" : "check");
+    if (!same) signal(r.confianca === "alta" ? "ok" : "check");
   }
 
   // ---------- Bip, vibração e destaque ao fixar o produto ----------
   let soundOn = true;
-  try { soundOn = localStorage.getItem("prateleira-som") !== "off"; } catch (e) {}
+  try { soundOn = localStorage.getItem("prateleira-som-v2") !== "off"; } catch (e) {}
   let audioReady = false;
 
   // Gera o bip como um arquivo de som curto (WAV). No iPhone, este tipo de som toca mesmo no modo silencioso.
@@ -496,8 +505,9 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       if (p && p.then) p.then(() => { a.pause(); a.currentTime = 0; a.muted = false; audioReady = true; }).catch(() => { a.muted = false; });
     });
   }
-  document.addEventListener("touchend", unlockAudio, { passive: true });
-  document.addEventListener("click", unlockAudio);
+  function onFirstTap() { unlockAudio(); $("tapStart").hidden = true; }
+  document.addEventListener("touchend", onFirstTap, { passive: true });
+  document.addEventListener("click", onFirstTap);
 
   let warned = false;
   function beep(kind) {
@@ -524,7 +534,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     soundOn = on;
     $("sndBtn").setAttribute("aria-pressed", on);
     $("sndBtn").textContent = on ? "Bip ligado" : "Bip desligado";
-    try { localStorage.setItem("prateleira-som", on ? "on" : "off"); } catch (e) {}
+    try { localStorage.setItem("prateleira-som-v2", on ? "on" : "off"); } catch (e) {}
     if (on && !quiet) { unlockAudio(); setTimeout(() => beep("ok"), 60); }
   }
   $("sndBtn").onclick = () => setSound(!soundOn);
@@ -616,9 +626,23 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     tagf.append(here);
     tagf.append(el("span", "demo", "preços de exemplo · toque para mais"));
     tagf.setAttribute("aria-label", r.produto + ": " + p1.loja + " " + fmt(p1.val) + ", " + p2.loja + " " + fmt(p2.val) + ". Toque para ver mais.");
+    clearTimeout(holdTimer); holdTimer = null;
     tagf.hidden = false;
     tagf.style.opacity = "1";
     placeTag();
+  }
+  // Ao mover o celular, a etiqueta fica (mais transparente) até aparecer outro produto;
+  // some sozinha só depois de TAG_HOLD_MS sem nenhum produto novo.
+  const TAG_HOLD_MS = 8000;
+  let holdTimer = null;
+  function dimTag() {
+    if (tagf.hidden) return;
+    tagf.style.opacity = "0.72";
+    if (!holdTimer) holdTimer = setTimeout(function expire() {
+      if (busy) { holdTimer = setTimeout(expire, 1000); return; }
+      holdTimer = null;
+      hideTag();
+    }, TAG_HOLD_MS);
   }
   function placeTag() {
     const vw = window.innerWidth, vh = window.innerHeight, W = 172, H = tagf.offsetHeight || 140, m = 8;
