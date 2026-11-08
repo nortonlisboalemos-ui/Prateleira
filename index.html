@@ -142,7 +142,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
 <div id="flash" aria-hidden="true"></div>
 
 <div class="top">
-  <span class="brand">Prateleira<span class="ver">v7</span></span>
+  <span class="brand">Prateleira<span class="ver">v8</span></span>
   <div class="seg" role="group" aria-label="Modo da IA">
     <button type="button" id="mFast" aria-pressed="true">Rápido</button>
     <button type="button" id="mPrecise" aria-pressed="false">Preciso</button>
@@ -337,7 +337,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       "O produto pode estar distante e pequeno na imagem: examine com atenção logotipos, cores, formato da embalagem e textos pequenos antes de responder. Se o nome for reconhecível mas o tamanho não, informe o produto e deixe o tamanho vazio.",
       ultimo ? 'O último produto identificado foi: "' + String(ultimo).slice(0, 160) + '".' : "Nenhum produto foi identificado antes.",
       "Responda somente com um objeto JSON, em um destes formatos:",
-      '1) Produto no centro: {"tipo":"produto","produto":"nome curto como na embalagem, com marca, versão e tamanho","marca":"","versao":"","tamanho":"ex.: 500 g","confianca":"alta","motivo_duvida":"","preco_etiqueta":null,"box_2d":[ymin,xmin,ymax,xmax]}',
+      '1) Produto no centro: {"tipo":"produto","produto":"nome curto como na embalagem, com marca, versão e tamanho","marca":"","versao":"","tamanho":"ex.: 500 g","confianca":"alta","motivo_duvida":"","preco_etiqueta":null,"preco_tipico":12.5,"box_2d":[ymin,xmin,ymax,xmax]}',
       '2) Só a etiqueta de preço da prateleira no centro: {"tipo":"etiqueta","descricao":"texto da etiqueta","preco":9.99,"corresponde_ao_ultimo":true}',
       '3) Nada identificável: {"tipo":"nada"}',
       "Regras:",
@@ -345,6 +345,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       "- confianca: alta, media ou baixa. Use alta só se marca, versão e tamanho estiverem legíveis. Sem tamanho legível, a confiança é no máximo media.",
       "- Não invente marca, versão ou tamanho que não estejam visíveis. Se faltar algo, deixe vazio, use media ou baixa e explique em motivo_duvida, em uma frase curta.",
       "- preco_etiqueta: preço em reais (número) desse mesmo produto, lido da etiqueta da prateleira OU de uma etiqueta de balança colada na embalagem (campo TOTAL R$ ou VALOR); se nenhum estiver legível, null.",
+      "- preco_tipico: sua estimativa do preço típico, em reais (número), desse mesmo produto e tamanho em supermercados do Brasil hoje; é só uma referência aproximada.",
       "- Produto pesado na loja (etiqueta de balança com PESO): use esse peso como tamanho (ex.: 0,254 kg).",
       "- corresponde_ao_ultimo: true só se a etiqueta for claramente do último produto identificado.",
       "- box_2d: caixa do produto, coordenadas inteiras de 0 a 1000, na ordem [ymin, xmin, ymax, xmax]."
@@ -403,6 +404,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       }
       if (typeof r.preco_etiqueta === "string") r.preco_etiqueta = parseFloat(r.preco_etiqueta.replace(",", "."));
       if (typeof r.preco === "string") r.preco = parseFloat(r.preco.replace(",", "."));
+      if (typeof r.preco_tipico === "string") r.preco_tipico = parseFloat(r.preco_tipico.replace(",", "."));
       r.modelo = name;
       return r;
     }
@@ -449,6 +451,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       else toast("Não achei um produto claro. Aproxime e deixe a embalagem de frente.");
       return;
     }
+    r.produto = String(r.produto).trim().split(/\s+/).filter((w, i, a) => i === 0 || w.toLowerCase() !== a[i - 1].toLowerCase()).join(" ");
     const tam = String(r.tamanho || "").trim();
     if (!tam) {
       if (r.confianca === "alta") r.confianca = "media";
@@ -458,6 +461,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     }
     const same = !!(last && last.produto === r.produto);
     if (same && !r.preco_etiqueta && last.preco_etiqueta) r.preco_etiqueta = last.preco_etiqueta;
+    if (same && last.preco_tipico > 0) r.preco_tipico = last.preco_tipico;
     last = r;
     showBox(r.caixa);
     renderCard(r, ms);
@@ -562,10 +566,12 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   function examplePrices(r) {
     const seed = hash((r.produto || "") + (r.tamanho || ""));
-    const ref = r.preco_etiqueta > 0 ? r.preco_etiqueta : 6 + (seed % 3400) / 100;
+    const ref = r.preco_etiqueta > 0 ? r.preco_etiqueta
+      : r.preco_tipico > 0 ? r.preco_tipico * 1.1
+      : 6 + (seed % 3400) / 100;
     const d1 = 0.80 + ((seed >>> 8) % 10) / 100;
     const d2 = Math.min(0.98, d1 + 0.04 + ((seed >>> 16) % 5) / 100);
-    const lojas = ["Angeloni", "Giassi", "Bistek", "Imperatriz", "Fort Atacadista", "Hippo"];
+    const lojas = ["Angeloni", "Giassi", "Bistek", "Imperatriz", "Fort", "Hippo"];
     const i1 = seed % lojas.length, i2 = (i1 + 1 + ((seed >>> 3) % (lojas.length - 1))) % lojas.length;
     return [
       { val: ref * d1, loja: lojas[i1], fonte: "nota fiscal" },
