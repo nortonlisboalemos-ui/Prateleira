@@ -66,6 +66,9 @@ body.card-on #hint { top: calc(env(safe-area-inset-top, 0px) + 104px); }
 }
 #card.on { transform: translateY(0); }
 #card.pop .tag { animation: pop 0.45s ease; }
+#flash { position: fixed; inset: 0; pointer-events: none; border: 10px solid var(--tag); opacity: 0; }
+#flash.go { animation: flash 0.7s ease-out; }
+@keyframes flash { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes pop { 0% { transform: scale(1); } 35% { transform: scale(1.035); box-shadow: 0 0 0 6px rgba(255,216,77,0.55); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,216,77,0); } }
 .snd {
   position: fixed; right: max(14px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 60px);
@@ -111,6 +114,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
 <video id="video" playsinline muted autoplay></video>
 <div id="reticle" aria-hidden="true"></div>
 <div id="box" aria-hidden="true"></div>
+<div id="flash" aria-hidden="true"></div>
 
 <div class="top">
   <span class="brand">Prateleira</span>
@@ -199,7 +203,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       $("startScreen").hidden = true;
       try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
       requestAnimationFrame(loop);
-      setTimeout(() => { if (soundOn && (!audioCtx || audioCtx.state !== "running")) toast("Toque uma vez na tela para ativar o bip.", 5000); }, 800);
+      setTimeout(() => { if (soundOn && !audioReady) toast("Toque uma vez na tela para ativar o bip.", 5000); }, 800);
       loadModels().catch((e) => { if (e && e.kind === "key") askCode("A chave não foi aceita pelo Google. Confira e cole de novo."); });
       return true;
     } catch (e) {
@@ -427,38 +431,59 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   }
 
   // ---------- Bip, vibração e destaque ao fixar o produto ----------
-  let audioCtx = null;
   let soundOn = true;
   try { soundOn = localStorage.getItem("prateleira-som") !== "off"; } catch (e) {}
+  let audioReady = false;
 
+  // Gera o bip como um arquivo de som curto (WAV). No iPhone, este tipo de som toca mesmo no modo silencioso.
+  function makeBeep(notes) {
+    const rate = 22050, total = Math.round(rate * 0.32), data = new Int16Array(total);
+    notes.forEach(([freq, at, dur]) => {
+      const start = Math.round(at * rate), len = Math.round(dur * rate);
+      for (let i = 0; i < len && start + i < total; i++) {
+        const t = i / rate, env = Math.min(1, i / (0.008 * rate)) * Math.min(1, (len - i) / (0.03 * rate));
+        data[start + i] += Math.round(Math.sin(2 * Math.PI * freq * t) * env * 0.6 * 32767);
+      }
+    });
+    const buf = new ArrayBuffer(44 + total * 2), v = new DataView(buf);
+    const str = (o, txt) => { for (let i = 0; i < txt.length; i++) v.setUint8(o + i, txt.charCodeAt(i)); };
+    str(0, "RIFF"); v.setUint32(4, 36 + total * 2, true); str(8, "WAVE"); str(12, "fmt ");
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    str(36, "data"); v.setUint32(40, total * 2, true);
+    for (let i = 0; i < total; i++) v.setInt16(44 + i * 2, data[i], true);
+    const a = new Audio(URL.createObjectURL(new Blob([buf], { type: "audio/wav" })));
+    a.preload = "auto";
+    a.setAttribute("playsinline", "");
+    return a;
+  }
+  const sounds = {
+    ok: makeBeep([[1046, 0, 0.09], [1568, 0.11, 0.12]]),
+    check: makeBeep([[660, 0, 0.09], [660, 0.16, 0.09]])
+  };
+
+  // O iPhone só libera som depois de um toque: no primeiro toque, cada som é tocado em silêncio e pausado.
   function unlockAudio() {
-    try {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      if (!audioCtx) audioCtx = new AC();
-      if (navigator.audioSession) navigator.audioSession.type = "playback";
-      if (audioCtx.state === "suspended") audioCtx.resume();
-    } catch (e) {}
+    if (audioReady) return;
+    Object.values(sounds).forEach((a) => {
+      a.muted = true;
+      const p = a.play();
+      if (p && p.then) p.then(() => { a.pause(); a.currentTime = 0; a.muted = false; audioReady = true; }).catch(() => { a.muted = false; });
+    });
   }
   document.addEventListener("touchend", unlockAudio, { passive: true });
   document.addEventListener("click", unlockAudio);
 
+  let warned = false;
   function beep(kind) {
-    if (!soundOn || !audioCtx || audioCtx.state !== "running") return;
-    const notes = kind === "ok" ? [[1046, 0], [1568, 0.11]] : [[660, 0], [660, 0.16]];
-    const t0 = audioCtx.currentTime + 0.01;
-    notes.forEach(([freq, at]) => {
-      const osc = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = freq;
-      g.gain.setValueAtTime(0.0001, t0 + at);
-      g.gain.exponentialRampToValueAtTime(0.35, t0 + at + 0.012);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + 0.1);
-      osc.connect(g).connect(audioCtx.destination);
-      osc.start(t0 + at);
-      osc.stop(t0 + at + 0.12);
-    });
+    if (!soundOn) return;
+    const a = sounds[kind] || sounds.ok;
+    try {
+      a.muted = false;
+      a.currentTime = 0;
+      const p = a.play();
+      if (p && p.catch) p.catch(() => { if (!warned) { warned = true; toast("Toque uma vez na tela para ativar o bip."); } });
+    } catch (e) {}
   }
 
   function signal(kind) {
@@ -467,6 +492,8 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     card.classList.remove("pop");
     void card.offsetWidth;
     card.classList.add("pop");
+    const f = $("flash");
+    f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
   }
 
   function setSound(on, quiet) {
