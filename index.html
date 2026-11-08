@@ -59,14 +59,19 @@ html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink
 }
 body.card-on #hint { opacity: 0; }
 #tagf {
-  position: fixed; left: 0; top: 0; width: 190px; box-sizing: border-box; padding: 10px 12px; border-radius: 12px;
+  position: fixed; left: 0; top: 0; width: 172px; box-sizing: border-box; padding: 8px 10px; border-radius: 12px;
   background: rgba(11,16,13,0.62); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   border: 1px solid rgba(255,216,77,0.75); color: var(--ink); font-family: var(--font-body); text-align: left;
   display: flex; flex-direction: column; gap: 3px; cursor: pointer; appearance: none; transition: opacity 0.2s ease;
 }
 #tagf .nm { font-size: 12px; color: #d4ded8; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-#tagf .best { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1; color: var(--tag); font-variant-numeric: tabular-nums; }
-#tagf .ln { font-size: 13px; }
+#tagf .best { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1; color: var(--tag); font-variant-numeric: tabular-nums; }
+#tagf .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+#tagf .row .st { font-size: 14px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#tagf .row .pr { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.05; color: var(--tag); font-variant-numeric: tabular-nums; white-space: nowrap; }
+#tagf .row.here { border-top: 1px solid rgba(255,255,255,0.18); padding-top: 3px; margin-top: 1px; }
+#tagf .row.here .st { font-weight: 400; color: #d4ded8; font-size: 13px; }
+#tagf .row.here .pr { color: var(--ink); font-size: 20px; }
 #tagf .sub { font-size: 12px; color: #d4ded8; }
 #tagf .warn { align-self: flex-start; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; background: #9a5a00; color: #fff; border-radius: 999px; padding: 1px 7px; }
 #tagf .demo { font-size: 10px; color: #9fb0a6; }
@@ -274,15 +279,18 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   // ---------- Captura do quadro ----------
   const shot = document.createElement("canvas");
   // Envia só o trecho que aparece na tela, reduzido; assim a caixa devolvida vale direto para a tela.
+  let lastCrop = null;
   function grabFrame() {
     const iw = video.videoWidth, ih = video.videoHeight;
     const vw = window.innerWidth, vh = window.innerHeight;
     const s = Math.max(vw / iw, vh / ih);
-    const sw = vw / s, sh = vh / s, sx = (iw - sw) / 2, sy = (ih - sh) / 2;
-    const k = Math.min(1, 768 / Math.max(sw, sh));
+    const F = 0.8;   // envia os 80% centrais da tela, com mais nitidez, para ler produtos distantes
+    const sw = (vw / s) * F, sh = (vh / s) * F, sx = (iw - sw) / 2, sy = (ih - sh) / 2;
+    lastCrop = { x: vw * (1 - F) / 2, y: vh * (1 - F) / 2, w: vw * F, h: vh * F };
+    const k = Math.min(1, 1024 / Math.max(sw, sh));
     shot.width = Math.round(sw * k); shot.height = Math.round(sh * k);
     shot.getContext("2d").drawImage(video, sx, sy, sw, sh, 0, 0, shot.width, shot.height);
-    return shot.toDataURL("image/jpeg", 0.75).split(",")[1];
+    return shot.toDataURL("image/jpeg", 0.8).split(",")[1];
   }
 
   // ---------- IA do Google (Gemini, nível gratuito) ----------
@@ -318,6 +326,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     return [
       "Você vê um quadro da câmera de um celular dentro de um supermercado no Brasil.",
       "Olhe primeiro para o centro da imagem, que é para onde a pessoa está apontando.",
+      "O produto pode estar distante e pequeno na imagem: examine com atenção logotipos, cores, formato da embalagem e textos pequenos antes de responder. Se o nome for reconhecível mas o tamanho não, informe o produto e deixe o tamanho vazio.",
       ultimo ? 'O último produto identificado foi: "' + String(ultimo).slice(0, 160) + '".' : "Nenhum produto foi identificado antes.",
       "Responda somente com um objeto JSON, em um destes formatos:",
       '1) Produto no centro: {"tipo":"produto","produto":"nome curto como na embalagem, com marca, versão e tamanho","marca":"","versao":"","tamanho":"ex.: 500 g","confianca":"alta","motivo_duvida":"","preco_etiqueta":null,"box_2d":[ymin,xmin,ymax,xmax]}',
@@ -327,7 +336,8 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       "- tamanho (peso ou volume, como 250 g, 65 ml, 1 L) é obrigatório para comparar preços: procure em toda a embalagem, inclusive em letras pequenas perto da base, e inclua também no fim do campo produto.",
       "- confianca: alta, media ou baixa. Use alta só se marca, versão e tamanho estiverem legíveis. Sem tamanho legível, a confiança é no máximo media.",
       "- Não invente marca, versão ou tamanho que não estejam visíveis. Se faltar algo, deixe vazio, use media ou baixa e explique em motivo_duvida, em uma frase curta.",
-      "- preco_etiqueta: preço em reais (número) da etiqueta da prateleira desse mesmo produto, se legível; senão null.",
+      "- preco_etiqueta: preço em reais (número) desse mesmo produto, lido da etiqueta da prateleira OU de uma etiqueta de balança colada na embalagem (campo TOTAL R$ ou VALOR); se nenhum estiver legível, null.",
+      "- Produto pesado na loja (etiqueta de balança com PESO): use esse peso como tamanho (ex.: 0,254 kg).",
       "- corresponde_ao_ultimo: true só se a etiqueta for claramente do último produto identificado.",
       "- box_2d: caixa do produto, coordenadas inteiras de 0 a 1000, na ordem [ymin, xmin, ymax, xmax]."
     ].join("\n");
@@ -526,12 +536,14 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     if (!c || typeof c.x !== "number") { hideBox(); lastRect = null; return; }
     const vw = window.innerWidth, vh = window.innerHeight;
     const cl = (v) => Math.max(0, Math.min(1, v));
-    boxEl.style.left = (cl(c.x) * vw) + "px";
-    boxEl.style.top = (cl(c.y) * vh) + "px";
-    boxEl.style.width = (cl(c.w) * vw) + "px";
-    boxEl.style.height = (cl(c.h) * vh) + "px";
+    const cr = lastCrop || { x: 0, y: 0, w: vw, h: vh };
+    const bx = cr.x + cl(c.x) * cr.w, by = cr.y + cl(c.y) * cr.h, bw = cl(c.w) * cr.w, bh = cl(c.h) * cr.h;
+    boxEl.style.left = bx + "px";
+    boxEl.style.top = by + "px";
+    boxEl.style.width = bw + "px";
+    boxEl.style.height = bh + "px";
     boxEl.classList.add("on");
-    lastRect = { x: cl(c.x) * vw, y: cl(c.y) * vh, w: cl(c.w) * vw, h: cl(c.h) * vh };
+    lastRect = { x: bx, y: by, w: bw, h: bh };
   }
   function hideBox() { boxEl.classList.remove("on"); }
 
@@ -543,10 +555,11 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     const ref = r.preco_etiqueta > 0 ? r.preco_etiqueta : 6 + (seed % 3400) / 100;
     const d1 = 0.80 + ((seed >>> 8) % 10) / 100;
     const d2 = Math.min(0.98, d1 + 0.04 + ((seed >>> 16) % 5) / 100);
-    const lojas = ["Mercado A", "Mercado B", "Mercado C", "Mercado D"];
+    const lojas = ["Angeloni", "Giassi", "Bistek", "Imperatriz", "Fort Atacadista", "Hippo"];
+    const i1 = seed % lojas.length, i2 = (i1 + 1 + ((seed >>> 3) % (lojas.length - 1))) % lojas.length;
     return [
-      { val: ref * d1, loja: lojas[seed % 4], fonte: "nota fiscal" },
-      { val: ref * d2, loja: lojas[(seed + 1) % 4], fonte: (seed >>> 4) % 2 ? "site" : "nota fiscal" }
+      { val: ref * d1, loja: lojas[i1], fonte: "nota fiscal" },
+      { val: ref * d2, loja: lojas[i2], fonte: (seed >>> 4) % 2 ? "site" : "nota fiscal" }
     ];
   }
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
@@ -589,27 +602,38 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     tagf.textContent = "";
     if (conf !== "alta") tagf.append(el("span", "warn", "confirme"));
     tagf.append(el("span", "nm", r.produto));
-    tagf.append(el("span", "best", fmt(p1.val)));
-    const less = r.preco_etiqueta > 0 ? " · " + Math.round((1 - p1.val / r.preco_etiqueta) * 100) + "% menos" : "";
-    tagf.append(el("span", "ln", p1.loja + less));
-    tagf.append(el("span", "sub", "2º " + fmt(p2.val) + " · " + p2.loja));
-    tagf.append(el("span", "sub", r.preco_etiqueta > 0 ? "Aqui " + fmt(r.preco_etiqueta) : "Preço daqui não lido"));
-    tagf.append(el("span", "demo", "valores de exemplo · toque para ver mais"));
-    tagf.setAttribute("aria-label", r.produto + ", melhor preço " + fmt(p1.val) + " no " + p1.loja + ". Toque para ver mais.");
+    [p1, p2].forEach((p) => {
+      const row = el("span", "row");
+      row.append(el("span", "st", p.loja), el("span", "pr", fmt(p.val)));
+      tagf.append(row);
+    });
+    const here = el("span", "row here");
+    if (r.preco_etiqueta > 0) {
+      here.append(el("span", "st", "Aqui"), el("span", "pr", fmt(r.preco_etiqueta)));
+    } else {
+      here.append(el("span", "st", "Aqui: preço não lido"));
+    }
+    tagf.append(here);
+    tagf.append(el("span", "demo", "preços de exemplo · toque para mais"));
+    tagf.setAttribute("aria-label", r.produto + ": " + p1.loja + " " + fmt(p1.val) + ", " + p2.loja + " " + fmt(p2.val) + ". Toque para ver mais.");
     tagf.hidden = false;
     tagf.style.opacity = "1";
     placeTag();
   }
   function placeTag() {
-    const vw = window.innerWidth, vh = window.innerHeight, W = 190, H = tagf.offsetHeight || 150, m = 8;
+    const vw = window.innerWidth, vh = window.innerHeight, W = 172, H = tagf.offsetHeight || 140, m = 8;
     let rc = lastRect;
     if (!rc) { const b = reticle.getBoundingClientRect(); rc = { x: b.left, y: b.top, w: b.width, h: b.height }; }
-    let left;
-    if (rc.x + rc.w + m + W <= vw - m) left = rc.x + rc.w + m;
-    else if (rc.x - m - W >= m) left = rc.x - m - W;
-    else left = Math.min(vw - W - m, Math.max(m, rc.x + rc.w - W - m));
     const topMin = 70, topMax = vh - H - 70;
-    const top = Math.min(topMax, Math.max(topMin, rc.y + rc.h * 0.25));
+    const clampL = (v) => Math.min(vw - W - m, Math.max(m, v));
+    const clampT = (v) => Math.min(topMax, Math.max(topMin, v));
+    const cx = rc.x + rc.w / 2 - W / 2;
+    let left, top;
+    if (rc.x + rc.w + m + W <= vw - m) { left = rc.x + rc.w + m; top = clampT(rc.y + rc.h * 0.25); }
+    else if (rc.x - m - W >= m) { left = rc.x - m - W; top = clampT(rc.y + rc.h * 0.25); }
+    else if (rc.y + rc.h + m + H <= vh - 70) { left = clampL(cx); top = rc.y + rc.h + m; }
+    else if (rc.y - m - H >= topMin) { left = clampL(cx); top = rc.y - m - H; }
+    else { left = clampL(rc.x + rc.w - W - m); top = clampT(rc.y + rc.h - H - m); }
     tagf.style.left = left + "px";
     tagf.style.top = top + "px";
   }
