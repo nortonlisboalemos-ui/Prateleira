@@ -55,7 +55,9 @@ html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink
 #hint {
   position: fixed; left: 50%; top: calc(42% + 30vmin); transform: translateX(-50%);
   background: var(--glass); color: var(--ink); font-size: 15px; padding: 6px 14px; border-radius: 999px; white-space: nowrap;
+  transition: top 0.3s ease;
 }
+body.card-on #hint { top: calc(env(safe-area-inset-top, 0px) + 64px); }
 
 #card {
   position: fixed; left: 0; right: 0; bottom: 0;
@@ -92,7 +94,7 @@ html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink
 .btn:focus-visible, .seg button:focus-visible { outline: 3px solid var(--tag); outline-offset: 2px; }
 input[type="password"], input[type="text"] { font: 18px var(--font-body); padding: 12px 14px; border-radius: 12px; border: 1px solid #3a4a41; background: #151d18; color: var(--ink); width: min(280px, 100%); text-align: center; }
 .err { color: var(--bad); font-size: 15px; }
-#toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 64px); transform: translateX(-50%); background: var(--glass); color: var(--ink); padding: 8px 14px; border-radius: 12px; font-size: 14px; max-width: calc(100% - 32px); text-align: center; }
+#toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 110px); transform: translateX(-50%); background: var(--glass); color: var(--ink); padding: 8px 14px; border-radius: 12px; font-size: 14px; max-width: calc(100% - 32px); text-align: center; }
 [hidden] { display: none !important; }
 @media (prefers-reduced-motion: reduce) { #reticle.busy { animation: none; } #card, #box { transition: none; } }
 </style>
@@ -140,7 +142,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   const card = $("card");
   const hint = $("hint");
 
-  const STILL_MS = 600;          // tempo parado antes de consultar
+  const STILL_MS = 400;        // tempo parado antes de consultar
   const STILL_LEVEL = 7;         // diferença média abaixo disso = parado
   const MOVE_LEVEL = 16;         // diferença média acima disso = movendo
   const MIN_GAP_MS = 1200;       // intervalo mínimo entre consultas
@@ -188,6 +190,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       $("startScreen").hidden = true;
       try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
       requestAnimationFrame(loop);
+      loadModels().catch((e) => { if (e && e.kind === "key") askCode("A chave não foi aceita pelo Google. Confira e cole de novo."); });
       return true;
     } catch (e) {
       $("startScreen").hidden = false;
@@ -242,22 +245,27 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
 
   // ---------- Captura do quadro ----------
   const shot = document.createElement("canvas");
+  // Envia só o trecho que aparece na tela, reduzido; assim a caixa devolvida vale direto para a tela.
   function grabFrame() {
     const iw = video.videoWidth, ih = video.videoHeight;
-    const k = Math.min(1, 1280 / Math.max(iw, ih));
-    shot.width = Math.round(iw * k); shot.height = Math.round(ih * k);
-    shot.getContext("2d").drawImage(video, 0, 0, shot.width, shot.height);
-    return shot.toDataURL("image/jpeg", 0.82).split(",")[1];
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const s = Math.max(vw / iw, vh / ih);
+    const sw = vw / s, sh = vh / s, sx = (iw - sw) / 2, sy = (ih - sh) / 2;
+    const k = Math.min(1, 768 / Math.max(sw, sh));
+    shot.width = Math.round(sw * k); shot.height = Math.round(sh * k);
+    shot.getContext("2d").drawImage(video, sx, sy, sw, sh, 0, 0, shot.width, shot.height);
+    return shot.toDataURL("image/jpeg", 0.75).split(",")[1];
   }
 
   // ---------- IA do Google (Gemini, nível gratuito) ----------
   const API = "https://generativelanguage.googleapis.com/v1beta";
   const PREFER = {
-    rapido: ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash"],
-    preciso: ["gemini-3.5-flash", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-3.1-flash-lite", "gemini-2.5-flash-lite"]
+    rapido: ["gemini-3.5-flash-lite", "gemini-2.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash"],
+    preciso: ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash-lite"]
   };
   let models = null;
   const blocked = new Set();
+  const noThinkCfg = new Set();   // modelos que recusaram o ajuste de raciocínio
 
   async function loadModels() {
     if (models) return models;
@@ -288,7 +296,8 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       '2) Só a etiqueta de preço da prateleira no centro: {"tipo":"etiqueta","descricao":"texto da etiqueta","preco":9.99,"corresponde_ao_ultimo":true}',
       '3) Nada identificável: {"tipo":"nada"}',
       "Regras:",
-      "- confianca: alta, media ou baixa. Use alta só se marca, versão e tamanho estiverem legíveis.",
+      "- tamanho (peso ou volume, como 250 g, 65 ml, 1 L) é obrigatório para comparar preços: procure em toda a embalagem, inclusive em letras pequenas perto da base, e inclua também no fim do campo produto.",
+      "- confianca: alta, media ou baixa. Use alta só se marca, versão e tamanho estiverem legíveis. Sem tamanho legível, a confiança é no máximo media.",
       "- Não invente marca, versão ou tamanho que não estejam visíveis. Se faltar algo, deixe vazio, use media ou baixa e explique em motivo_duvida, em uma frase curta.",
       "- preco_etiqueta: preço em reais (número) da etiqueta da prateleira desse mesmo produto, se legível; senão null.",
       "- corresponde_ao_ultimo: true só se a etiqueta for claramente do último produto identificado.",
@@ -306,20 +315,29 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     await loadModels();
     const tries = pickModels();
     if (!tries.length) throw { kind: "net" };
-    const body = JSON.stringify({
-      contents: [{ role: "user", parts: [
-        { inline_data: { mime_type: "image/jpeg", data: imageB64 } },
-        { text: prompt(last ? last.produto : null) }
-      ] }],
-      generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
-    });
+    const contents = [{ role: "user", parts: [
+      { inline_data: { mime_type: "image/jpeg", data: imageB64 } },
+      { text: prompt(last ? last.produto : null) }
+    ] }];
+    const makeBody = (withThink) => {
+      const cfg = { responseMimeType: "application/json", temperature: 0.1, maxOutputTokens: 1500 };
+      if (withThink) cfg.thinkingConfig = { thinkingLevel: "low" };
+      return JSON.stringify({ contents, generationConfig: cfg });
+    };
     let lastErr = { kind: "net" };
     for (const name of tries.slice(0, 3)) {
-      const res = await fetch(API + "/models/" + name + ":generateContent", {
+      const call = (withThink) => fetch(API + "/models/" + name + ":generateContent", {
         method: "POST", signal,
         headers: { "content-type": "application/json", "x-goog-api-key": code },
-        body
+        body: makeBody(withThink)
       });
+      let res = await call(!noThinkCfg.has(name));
+      if (res.status === 400 && !noThinkCfg.has(name)) {
+        const txt = await res.text().catch(() => "");
+        if (/API key not valid|API_KEY_INVALID/i.test(txt)) throw { kind: "key" };
+        noThinkCfg.add(name);
+        res = await call(false);
+      }
       if (res.status === 401 || res.status === 403) throw { kind: "key" };
       if (res.status === 429) { blocked.add(name); lastErr = { kind: "limit" }; continue; }
       if (res.status === 404 || res.status === 400) {
@@ -383,6 +401,13 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       else toast("Não achei um produto claro. Aproxime e deixe a embalagem de frente.");
       return;
     }
+    const tam = String(r.tamanho || "").trim();
+    if (!tam) {
+      if (r.confianca === "alta") r.confianca = "media";
+      if (!r.motivo_duvida) r.motivo_duvida = "não consegui ler o tamanho (peso ou volume). Aproxime da embalagem.";
+    } else if (!String(r.produto).toLowerCase().replace(/\s/g, "").includes(tam.toLowerCase().replace(/\s/g, ""))) {
+      r.produto = String(r.produto).trim() + " " + tam;
+    }
     if (last && last.produto === r.produto && !r.preco_etiqueta && last.preco_etiqueta) r.preco_etiqueta = last.preco_etiqueta;
     last = r;
     showBox(r.caixa);
@@ -393,14 +418,11 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   function showBox(c) {
     if (!c || typeof c.x !== "number") { hideBox(); return; }
     const vw = window.innerWidth, vh = window.innerHeight;
-    const iw = video.videoWidth, ih = video.videoHeight;
-    const s = Math.max(vw / iw, vh / ih);
-    const dw = iw * s, dh = ih * s, ox = (vw - dw) / 2, oy = (vh - dh) / 2;
     const cl = (v) => Math.max(0, Math.min(1, v));
-    boxEl.style.left = (ox + cl(c.x) * dw) + "px";
-    boxEl.style.top = (oy + cl(c.y) * dh) + "px";
-    boxEl.style.width = (cl(c.w) * dw) + "px";
-    boxEl.style.height = (cl(c.h) * dh) + "px";
+    boxEl.style.left = (cl(c.x) * vw) + "px";
+    boxEl.style.top = (cl(c.y) * vh) + "px";
+    boxEl.style.width = (cl(c.w) * vw) + "px";
+    boxEl.style.height = (cl(c.h) * vh) + "px";
     boxEl.classList.add("on");
   }
   function hideBox() { boxEl.classList.remove("on"); }
@@ -426,7 +448,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     const tag = el("div", "tag");
     const head = el("div", "head");
     head.append(el("span", "chip " + conf, conf === "alta" ? "certeza alta" : conf === "media" ? "confirme" : "incerto"),
-                el("span", "small", (ms / 1000).toFixed(1).replace(".", ",") + " s"));
+                el("span", "small", (ms / 1000).toFixed(1).replace(".", ",") + " s" + (r.modelo ? " · " + r.modelo.replace("gemini-", "") : "")));
     tag.append(head, el("h2", "", r.produto));
     if (conf !== "alta" && r.motivo_duvida) tag.append(el("div", "ask", "Confira: " + r.motivo_duvida));
     const here = el("div", "here");
@@ -449,6 +471,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     card.textContent = "";
     card.append(tag);
     card.classList.add("on");
+    document.body.classList.add("card-on");
   }
 
   // ---------- Código de acesso ----------
