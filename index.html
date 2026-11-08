@@ -53,11 +53,24 @@ html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink
 .seg button { appearance: none; border: 0; background: transparent; color: var(--muted); font: 600 14px var(--font-body); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--night); }
 #hint {
-  position: fixed; left: 50%; top: calc(42% + 30vmin); transform: translateX(-50%);
+  position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); transform: translateX(-50%);
   background: var(--glass); color: var(--ink); font-size: 15px; padding: 6px 14px; border-radius: 999px; white-space: nowrap;
-  transition: top 0.3s ease;
+  transition: opacity 0.2s ease;
 }
-body.card-on #hint { top: calc(env(safe-area-inset-top, 0px) + 104px); }
+body.card-on #hint { opacity: 0; }
+#tagf {
+  position: fixed; left: 0; top: 0; width: 190px; box-sizing: border-box; padding: 10px 12px; border-radius: 12px;
+  background: rgba(11,16,13,0.62); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,216,77,0.75); color: var(--ink); font-family: var(--font-body); text-align: left;
+  display: flex; flex-direction: column; gap: 3px; cursor: pointer; appearance: none; transition: opacity 0.2s ease;
+}
+#tagf .nm { font-size: 12px; color: #d4ded8; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+#tagf .best { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1; color: var(--tag); font-variant-numeric: tabular-nums; }
+#tagf .ln { font-size: 13px; }
+#tagf .sub { font-size: 12px; color: #d4ded8; }
+#tagf .warn { align-self: flex-start; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; background: #9a5a00; color: #fff; border-radius: 999px; padding: 1px 7px; }
+#tagf .demo { font-size: 10px; color: #9fb0a6; }
+#tagf.pop { animation: pop 0.45s ease; }
 
 #card {
   position: fixed; left: 0; right: 0; bottom: 0;
@@ -126,7 +139,8 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
 <button type="button" id="sndBtn" class="snd" aria-pressed="true">Bip ligado</button>
 <div id="hint">Mire num produto e pare um instante</div>
 <div id="toast" role="status" hidden></div>
-<div id="card" aria-live="polite"></div>
+<button type="button" id="tagf" aria-live="polite" hidden></button>
+<div id="card"></div>
 
 <section class="screen" id="codeScreen" hidden>
   <h1>Prateleira</h1>
@@ -247,7 +261,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     if (m > MOVE_LEVEL) {
       stillSince = 0;
       needMove = false;
-      if (!busy) { reticle.className = ""; hideBox(); hint.textContent = "Mire num produto e pare um instante"; }
+      if (!busy) { reticle.className = ""; hideBox(); hideTag(); hint.textContent = "Mire num produto e pare um instante"; }
       return;
     }
     if (m < STILL_LEVEL) {
@@ -407,6 +421,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   function handleResult(r, ms) {
     if (r.tipo === "etiqueta" && last && r.corresponde_ao_ultimo && r.preco > 0) {
       last.preco_etiqueta = r.preco;
+      lastRect = null;
       renderCard(last, ms, "Preço local lido da etiqueta.");
       signal("ok");
       return;
@@ -489,9 +504,8 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   function signal(kind) {
     beep(kind);
     try { if (navigator.vibrate) navigator.vibrate(kind === "ok" ? [40, 40, 40] : 120); } catch (e) {}
-    card.classList.remove("pop");
-    void card.offsetWidth;
-    card.classList.add("pop");
+    const tg = $("tagf");
+    tg.classList.remove("pop"); void tg.offsetWidth; tg.classList.add("pop");
     const f = $("flash");
     f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
   }
@@ -507,8 +521,9 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   setSound(soundOn, true);
 
   // ---------- Destaque do produto ----------
+  let lastRect = null;
   function showBox(c) {
-    if (!c || typeof c.x !== "number") { hideBox(); return; }
+    if (!c || typeof c.x !== "number") { hideBox(); lastRect = null; return; }
     const vw = window.innerWidth, vh = window.innerHeight;
     const cl = (v) => Math.max(0, Math.min(1, v));
     boxEl.style.left = (cl(c.x) * vw) + "px";
@@ -516,6 +531,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     boxEl.style.width = (cl(c.w) * vw) + "px";
     boxEl.style.height = (cl(c.h) * vh) + "px";
     boxEl.classList.add("on");
+    lastRect = { x: cl(c.x) * vw, y: cl(c.y) * vh, w: cl(c.w) * vw, h: cl(c.h) * vh };
   }
   function hideBox() { boxEl.classList.remove("on"); }
 
@@ -561,10 +577,54 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     });
     tag.append(list, el("span", "small", "Preços de outros mercados: exemplo, até a base de preços ser conectada."));
     card.textContent = "";
-    card.append(tag);
-    card.classList.add("on");
-    document.body.classList.add("card-on");
+    card.append(tag, el("span", "small", "Toque para fechar"));
+    showTag(r);
   }
+
+  // ---------- Etiqueta flutuante (opção A) ----------
+  const tagf = $("tagf");
+  function showTag(r) {
+    const conf = ["alta", "media", "baixa"].includes(r.confianca) ? r.confianca : "baixa";
+    const [p1, p2] = examplePrices(r);
+    tagf.textContent = "";
+    if (conf !== "alta") tagf.append(el("span", "warn", "confirme"));
+    tagf.append(el("span", "nm", r.produto));
+    tagf.append(el("span", "best", fmt(p1.val)));
+    const less = r.preco_etiqueta > 0 ? " · " + Math.round((1 - p1.val / r.preco_etiqueta) * 100) + "% menos" : "";
+    tagf.append(el("span", "ln", p1.loja + less));
+    tagf.append(el("span", "sub", "2º " + fmt(p2.val) + " · " + p2.loja));
+    tagf.append(el("span", "sub", r.preco_etiqueta > 0 ? "Aqui " + fmt(r.preco_etiqueta) : "Preço daqui não lido"));
+    tagf.append(el("span", "demo", "valores de exemplo · toque para ver mais"));
+    tagf.setAttribute("aria-label", r.produto + ", melhor preço " + fmt(p1.val) + " no " + p1.loja + ". Toque para ver mais.");
+    tagf.hidden = false;
+    tagf.style.opacity = "1";
+    placeTag();
+  }
+  function placeTag() {
+    const vw = window.innerWidth, vh = window.innerHeight, W = 190, H = tagf.offsetHeight || 150, m = 8;
+    let rc = lastRect;
+    if (!rc) { const b = reticle.getBoundingClientRect(); rc = { x: b.left, y: b.top, w: b.width, h: b.height }; }
+    let left;
+    if (rc.x + rc.w + m + W <= vw - m) left = rc.x + rc.w + m;
+    else if (rc.x - m - W >= m) left = rc.x - m - W;
+    else left = Math.min(vw - W - m, Math.max(m, rc.x + rc.w - W - m));
+    const topMin = 70, topMax = vh - H - 70;
+    const top = Math.min(topMax, Math.max(topMin, rc.y + rc.h * 0.25));
+    tagf.style.left = left + "px";
+    tagf.style.top = top + "px";
+  }
+  function hideTag() {
+    if (!tagf.hidden) { tagf.style.opacity = "0"; setTimeout(() => { if (tagf.style.opacity === "0") tagf.hidden = true; }, 220); }
+    card.classList.remove("on");
+    document.body.classList.remove("card-on");
+  }
+  tagf.addEventListener("click", () => {
+    const open = !card.classList.contains("on");
+    card.classList.toggle("on", open);
+    document.body.classList.toggle("card-on", open);
+  });
+  card.addEventListener("click", () => { card.classList.remove("on"); document.body.classList.remove("card-on"); });
+  window.addEventListener("resize", () => { if (!tagf.hidden) placeTag(); });
 
   // ---------- Código de acesso ----------
   function askCode(msg) {
