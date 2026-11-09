@@ -188,6 +188,22 @@ body.card-on #confirm { visibility: hidden; }
 #tagf .row.web .st { font-style: italic; }
 .price .val { white-space: nowrap; }
 .price .src { min-width: 0; overflow-wrap: anywhere; }
+#quoteBtn { background: var(--shelf); color: #fff; }
+#quoteBtn:disabled { opacity: 0.6; }
+#quoteBox { width: min(420px, 100%); text-align: left; display: flex; flex-direction: column; gap: 8px; }
+#quoteBox .qmsg { color: var(--muted); font-size: 15px; text-align: center; }
+#quoteBox table { width: 100%; border-collapse: collapse; font-size: 14px; }
+#quoteBox th, #quoteBox td { padding: 7px 6px; border-bottom: 1px solid #26332b; vertical-align: top; }
+#quoteBox th { font: 700 15px var(--font-display); color: var(--ink); text-align: right; }
+#quoteBox th:first-child, #quoteBox td:first-child { text-align: left; }
+#quoteBox td.v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#quoteBox td.v .pn { display: block; white-space: normal; font-size: 11px; color: var(--muted); max-width: 120px; margin-left: auto; }
+#quoteBox td.best { color: var(--tag); font-weight: 700; }
+#quoteBox td.none { color: #5f7067; }
+#quoteBox tr.tot td { font: 700 17px var(--font-display); border-bottom: 0; }
+#quoteBox .verdict { background: #1d2a22; border: 1px solid var(--shelf); border-radius: 12px; padding: 10px 12px; font-size: 15px; line-height: 1.4; }
+#quoteBox .verdict strong { color: var(--tag); }
+#quoteBox .fine { font-size: 12px; color: var(--muted); line-height: 1.4; }
 .ghostlink { appearance: none; border: 0; background: transparent; color: var(--muted); text-decoration: underline; font: 14px var(--font-body); cursor: pointer; }
 [hidden] { display: none !important; }
 @media (prefers-reduced-motion: reduce) { #reticle.busy { animation: none; } #card, #box { transition: none; } }
@@ -202,7 +218,7 @@ body.card-on #confirm { visibility: hidden; }
 <div class="top">
   <div class="lt">
     <button type="button" id="homeBtn" class="homeb" aria-label="Voltar ao início">‹ Início</button>
-    <span class="brand">Prateleira<span class="ver">v12</span></span>
+    <span class="brand">Prateleira<span class="ver">v13</span></span>
   </div>
   <div class="seg" role="group" aria-label="Modo da IA">
     <button type="button" id="mFast" aria-pressed="true">Rápido</button>
@@ -281,6 +297,8 @@ body.card-on #confirm { visibility: hidden; }
   </form>
   <ul id="shopList"></ul>
   <p id="listEmpty">Sua lista está vazia.</p>
+  <button class="btn" type="button" id="quoteBtn" hidden>Pesquisar preços da lista</button>
+  <div id="quoteBox" aria-live="polite" hidden></div>
   <button type="button" class="ghostlink" id="clearDone" hidden>Apagar itens riscados</button>
   <button class="btn" type="button" id="listShelf">Ir para a prateleira</button>
   <button class="btn ghost" type="button" id="listHome">Início</button>
@@ -1019,6 +1037,7 @@ body.card-on #confirm { visibility: hidden; }
       ul.append(li);
     });
     $("listEmpty").hidden = shop.length > 0;
+    $("quoteBtn").hidden = shop.length === 0;
     $("clearDone").hidden = !shop.some((x) => x.feito);
   }
   function addItems(items) {
@@ -1180,7 +1199,7 @@ body.card-on #confirm { visibility: hidden; }
   const BASE = { projectId: "", apiKey: "" };
   const baseOn = () => !!(BASE.projectId && BASE.apiKey);
   const FS = () => "https://firestore.googleapis.com/v1/projects/" + BASE.projectId + "/databases/(default)/documents";
-  const APP_VER = "v12";
+  const APP_VER = "v13";
 
   const norm = (s) => plain(s).replace(/[^a-z0-9]+/g, " ").trim();
   function tamanhoN(s) {
@@ -1297,21 +1316,23 @@ body.card-on #confirm { visibility: hidden; }
     gravarFila(resto);
   }
   const nuvemCache = new Map();
-  async function buscarNuvem(marcaN) {
-    const c = nuvemCache.get(marcaN);
+  async function buscarNuvem(valor, campo) {
+    campo = campo || "marca_n";
+    const ck = campo + "=" + valor;
+    const c = nuvemCache.get(ck);
     if (c && Date.now() - c.t < 5 * 60e3) return c.lista;
     const res = await fetch(FS() + ":runQuery?key=" + encodeURIComponent(BASE.apiKey), {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ structuredQuery: {
         from: [{ collectionId: "precos" }],
-        where: { fieldFilter: { field: { fieldPath: "marca_n" }, op: "EQUAL", value: { stringValue: marcaN } } },
-        limit: 300
+        where: { fieldFilter: { field: { fieldPath: campo }, op: "EQUAL", value: { stringValue: valor } } },
+        limit: 500
       } })
     });
     if (!res.ok) throw new Error("base " + res.status);
     const d = await res.json();
     const lista = (Array.isArray(d) ? d : []).filter((x) => x.document).map((x) => fromFs(x.document));
-    nuvemCache.set(marcaN, { t: Date.now(), lista });
+    nuvemCache.set(ck, { t: Date.now(), lista });
     return lista;
   }
 
@@ -1408,8 +1429,9 @@ body.card-on #confirm { visibility: hidden; }
     mostrarMercado();
     if (last) refresh(last);
   }
-  async function mercadosPerto(lat, lon) {
-    const q = '[out:json][timeout:15];nwr["shop"~"^(supermarket|convenience|wholesale|greengrocer|butcher|department_store)$"](around:400,' + lat + "," + lon + ");out center tags 30;";
+  async function mercadosPerto(lat, lon, raio, soGrandes) {
+    const tipos = soGrandes ? "supermarket|wholesale" : "supermarket|convenience|wholesale|greengrocer|butcher|department_store";
+    const q = '[out:json][timeout:20];nwr["shop"~"^(' + tipos + ')$"](around:' + (raio || 400) + "," + lat + "," + lon + ");out center tags 150;";
     try {
       const res = await fetch("https://overpass-api.de/api/interpreter", {
         method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: "data=" + encodeURIComponent(q)
@@ -1420,7 +1442,8 @@ body.card-on #confirm { visibility: hidden; }
         const la = e.lat != null ? e.lat : e.center && e.center.lat, lo = e.lon != null ? e.lon : e.center && e.center.lon;
         const t = e.tags || {};
         const dm = distM(lat, lon, la, lo);
-        return { id: "osm:" + e.type + "/" + e.id, nome: t.name || t.brand || "", lat: la, lon: lo, dist: dm, score: dm * (t.shop === "supermarket" || t.shop === "wholesale" ? 1 : 2) };
+        return { id: "osm:" + e.type + "/" + e.id, nome: t.name || t.brand || "", rede: t.brand || "", bairro: t["addr:suburb"] || "", cidade: t["addr:city"] || "",
+          lat: la, lon: lo, dist: dm, score: dm * (t.shop === "supermarket" || t.shop === "wholesale" ? 1 : 2) };
       }).filter((m) => m.nome && typeof m.lat === "number").sort((a, b) => a.score - b.score);
     } catch (e) { return []; }
   }
@@ -1467,6 +1490,207 @@ body.card-on #confirm { visibility: hidden; }
     fecharMercado();
   });
   mostrarMercado();
+
+  // ======================================================================
+  // COTAÇÃO DA LISTA EM DOIS MERCADOS PRÓXIMOS
+  // 1º usa preços registrados pelos usuários naquele mercado (últimos 30 dias);
+  // 2º, para o que faltar, pesquisa na internet (site, app ou encarte do próprio mercado).
+  // ======================================================================
+  const QUOTE_KEY = "prateleira-cotacao-v1";
+  function pegarPosicao() {
+    return new Promise((ok) => {
+      if (!navigator.geolocation) return ok(null);
+      navigator.geolocation.getCurrentPosition(ok, () => ok(null), { enableHighAccuracy: true, timeout: 15000, maximumAge: 120000 });
+    });
+  }
+  async function cidadeDe(lat, lon) {
+    try {
+      const res = await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&accept-language=pt-BR&lat=" + lat + "&lon=" + lon);
+      if (!res.ok) return "";
+      const a = (await res.json()).address || {};
+      return [a.suburb || a.neighbourhood || a.quarter || "", a.city || a.town || a.village || a.municipality || "", a.state || ""].filter(Boolean).join(", ");
+    } catch (e) { return ""; }
+  }
+  // Os dois supermercados mais próximos, de redes diferentes.
+  function escolherDois(lista) {
+    const out = [], redes = new Set();
+    for (const m of lista) {
+      const rede = norm(m.rede || m.nome).split(" ").filter((w) => !/^(super|supermercado|supermercados|mercado|hiper|atacado|atacadista)$/.test(w))[0] || norm(m.nome);
+      if (redes.has(rede)) continue;
+      redes.add(rede); out.push(m);
+      if (out.length === 2) break;
+    }
+    return out;
+  }
+  // Item genérico da lista ("feijão preto 1 kg") contra um preço registrado ("Feijão Preto Camil 1 kg").
+  function itemCombina(item, p) {
+    const t = tamanhoN(item);
+    if (t && t !== (p.tamanho_n || tamanhoN(p.tamanho || p.produto))) return false;
+    const a = tokens(item);
+    if (!a.length) return false;
+    const b = new Set(tokens(p.produto + " " + (p.marca || "") + " " + (p.versao || "")));
+    return a.every((w) => b.has(w));
+  }
+  function precoDosUsuarios(item, m, registros) {
+    const lim = Date.now() - 30 * 864e5;
+    let melhor = null;
+    registros.forEach((p) => {
+      if (p.mercado_id !== m.id || !(p.preco > 0)) return;
+      const t = Date.parse(p.data);
+      if (!(t > lim) || !itemCombina(item, p)) return;
+      if (!melhor || p.preco < melhor.preco) melhor = { produto: p.produto, preco: p.preco, qtd: 1, fonte: "usuarios", t };
+    });
+    return melhor;
+  }
+  async function precosNaInternet(m, itens, regiao) {
+    if (!itens.length) return {};
+    await loadModels();
+    const tries = WEB_MODELS.filter((n) => (models || []).includes(n) && !webBlocked.has(n));
+    if (!tries.length) return { erro: "sem modelo" };
+    const ask = [
+      'Pesquise na internet os preços atuais, em reais, destes itens de uma lista de compras no supermercado "' + m.nome + '"' + (regiao ? " (" + regiao + ")" : "") + ".",
+      "Use o site, o aplicativo, o encarte ou as ofertas desse mercado ou da rede dele. Se não achar o preço do item nesse mercado, use null: não use preço de outra loja e não estime.",
+      "Para cada item, escolha o produto mais comum e barato que atenda ao que foi pedido, respeitando o tamanho quando informado.",
+      "Itens:",
+      itens.map((t, i) => (i + 1) + ". " + t).join("\n"),
+      'Responda só com JSON, sem texto fora dele: {"itens":[{"n":1,"produto":"nome do produto encontrado","preco":12.99,"qtd":1}]}',
+      "qtd = quantas unidades desse produto a pessoa pediu (1 se ela não disse)."
+    ].join("\n");
+    let limite = false;
+    for (const name of tries) {
+      const call = (think) => fetch(API + "/models/" + name + ":generateContent", {
+        method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": code },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: ask }] }],
+          tools: [{ google_search: {} }],
+          generationConfig: Object.assign({ temperature: 0.1, maxOutputTokens: 3000 }, think ? { thinkingConfig: { thinkingBudget: 0 } } : {})
+        })
+      });
+      let res;
+      try { res = await call(true); if (res.status === 400) res = await call(false); } catch (e) { continue; }
+      if (res.status === 429) { limite = true; webBlocked.add(name); continue; }
+      if (!res.ok) continue;
+      const d = await res.json();
+      const cand = (d.candidates || [])[0] || {};
+      const j = parseJSON(((cand.content || {}).parts || []).filter((p) => !p.thought).map((p) => p.text || "").join(""));
+      const out = {};
+      ((j && j.itens) || []).forEach((x) => {
+        const n = Number(x.n) - 1;
+        const preco = typeof x.preco === "string" ? parseFloat(x.preco.replace(",", ".")) : Number(x.preco);
+        const qtd = Math.max(1, Math.min(50, Math.round(Number(x.qtd) || 1)));
+        if (n >= 0 && n < itens.length && preco > 0 && preco < 5000) out[n] = { produto: String(x.produto || "").slice(0, 80), preco, qtd, fonte: "internet" };
+      });
+      return out;
+    }
+    return { erro: limite ? "limite" : "falha" };
+  }
+
+  function quoteMsg(t) {
+    const box = $("quoteBox");
+    box.textContent = "";
+    box.append(el("p", "qmsg", t));
+    box.hidden = false;
+  }
+  async function cotarLista() {
+    const pend = shop.filter((x) => !x.feito).map((x) => x.texto);
+    const itens = (pend.length ? pend : shop.map((x) => x.texto)).slice(0, 30);
+    if (!itens.length) return;
+    if (!code) { askCode("Para pesquisar preços, cole a chave do Google AI Studio."); return; }
+    const btn = $("quoteBtn");
+    btn.disabled = true;
+    try {
+      quoteMsg("Localizando mercados perto de você…");
+      const pos = await pegarPosicao();
+      if (!pos) { quoteMsg("Preciso da sua localização para achar os mercados próximos. Permita o acesso à localização para este site e toque de novo."); return; }
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      ultimaPos = { lat, lon };
+      let lista = await mercadosPerto(lat, lon, 3000, true);
+      if (lista.length < 2) lista = await mercadosPerto(lat, lon, 8000, true);
+      const dois = escolherDois(lista);
+      if (!dois.length) { quoteMsg("Não encontrei supermercados perto de você no mapa. Tente de novo em outro lugar."); return; }
+      const regiao = await cidadeDe(lat, lon);
+      quoteMsg("Pesquisando " + itens.length + (itens.length === 1 ? " item" : " itens") + " em " + dois.map((m) => m.nome).join(" e ") + "… pode levar até 1 minuto.");
+      // Preços dos usuários (este celular + base colaborativa), por mercado.
+      let registros = lerPrecos();
+      if (baseOn()) {
+        const extra = await Promise.all(dois.map((m) => buscarNuvem(m.id, "mercado_id").catch(() => [])));
+        registros = registros.concat(...extra);
+      }
+      const colunas = await Promise.all(dois.map(async (m) => {
+        const precos = itens.map((it) => precoDosUsuarios(it, m, registros));
+        const faltam = itens.map((it, i) => (precos[i] ? null : i)).filter((i) => i !== null);
+        const web = await precosNaInternet(m, faltam.map((i) => itens[i]), regiao);
+        faltam.forEach((i, k) => { if (web[k]) precos[i] = web[k]; });
+        return { m, precos, erro: web.erro || "" };
+      }));
+      const res = { quando: Date.now(), itens, colunas: colunas.map((c) => ({ nome: c.m.nome, dist: c.m.dist, precos: c.precos, erro: c.erro })) };
+      try { localStorage.setItem(QUOTE_KEY, JSON.stringify(res)); } catch (e) {}
+      mostrarCotacao(res);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  $("quoteBtn").onclick = cotarLista;
+
+  function mostrarCotacao(res) {
+    const box = $("quoteBox");
+    box.textContent = "";
+    const [A, B] = res.colunas;
+    const custo = (p) => (p ? p.preco * (p.qtd || 1) : null);
+    const quando = new Date(res.quando).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+    box.append(el("p", "fine", "Pesquisa de " + quando + " · " + res.colunas.map((c) => c.nome + " (" + (c.dist < 1000 ? Math.round(c.dist) + " m" : (c.dist / 1000).toFixed(1).replace(".", ",") + " km") + ")").join(" e ")));
+    const tb = el("table"), th = el("tr");
+    th.append(el("th", "", "Item"));
+    res.colunas.forEach((c) => th.append(el("th", "", c.nome)));
+    const thead = el("thead"); thead.append(th); tb.append(thead);
+    const body = el("tbody");
+    const tot = res.colunas.map(() => ({ soma: 0, n: 0 }));
+    let ambos = 0, somaA = 0, somaB = 0;
+    res.itens.forEach((it, i) => {
+      const tr = el("tr");
+      tr.append(el("td", "", it));
+      const vals = res.colunas.map((c) => custo(c.precos[i]));
+      const minV = Math.min(...vals.filter((v) => v != null));
+      res.colunas.forEach((c, k) => {
+        const p = c.precos[i], v = vals[k];
+        if (v == null) { tr.append(el("td", "v none", "não achado")); return; }
+        const td = el("td", "v" + (vals.filter((x) => x != null).length > 1 && v === minV ? " best" : ""), fmt(v) + (p.fonte === "usuarios" ? " ✓" : " *"));
+        td.append(el("span", "pn", (p.qtd > 1 ? p.qtd + "× " : "") + (p.produto || "")));
+        tr.append(td);
+        tot[k].soma += v; tot[k].n++;
+      });
+      if (B && vals[0] != null && vals[1] != null) { ambos++; somaA += vals[0]; somaB += vals[1]; }
+      body.append(tr);
+    });
+    const trT = el("tr", "tot");
+    trT.append(el("td", "", "Total"));
+    tot.forEach((t) => trT.append(el("td", "v", t.n ? fmt(t.soma) : "-")));
+    body.append(trT);
+    const trN = el("tr");
+    trN.append(el("td", "", ""));
+    tot.forEach((t) => trN.append(el("td", "v none", t.n + " de " + res.itens.length + " itens")));
+    body.append(trN);
+    tb.append(body);
+    box.append(tb);
+    const v = el("div", "verdict");
+    if (B && ambos > 0) {
+      const dif = Math.abs(somaA - somaB);
+      const mais = somaA <= somaB ? A.nome : B.nome;
+      v.append(document.createTextNode("Comparando os " + ambos + (ambos === 1 ? " item achado" : " itens achados") + " nos dois mercados: "));
+      if (dif < 0.01) v.append(el("strong", "", "mesmo custo."));
+      else v.append(el("strong", "", mais + " sai " + fmt(dif) + " mais barato"), document.createTextNode(" (" + fmt(Math.min(somaA, somaB)) + " contra " + fmt(Math.max(somaA, somaB)) + ")."));
+    } else if (B) {
+      v.textContent = "Não achei itens em comum nos dois mercados para comparar o custo da lista.";
+    } else {
+      v.textContent = "Só encontrei um supermercado por perto.";
+    }
+    box.append(v);
+    const erros = res.colunas.filter((c) => c.erro === "limite");
+    if (erros.length) box.append(el("p", "fine", "Limite gratuito de buscas na internet atingido: alguns itens podem ter ficado sem preço. Tente mais tarde."));
+    box.append(el("p", "fine", "✓ = preço registrado por usuários no mercado (últimos 30 dias). * = preço achado na internet, pode estar desatualizado ou ser de outra unidade da rede. O total soma só os itens achados."));
+    box.hidden = false;
+  }
+  try { const q = JSON.parse(localStorage.getItem(QUOTE_KEY) || "null"); if (q && q.colunas) mostrarCotacao(q); } catch (e) {}
 
   // ---------- Código de acesso ----------
   function askCode(msg) {
