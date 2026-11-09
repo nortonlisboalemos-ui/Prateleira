@@ -131,6 +131,46 @@ body.card-on #hint { opacity: 0; }
 input[type="password"], input[type="text"] { font: 18px var(--font-body); padding: 12px 14px; border-radius: 12px; border: 1px solid #3a4a41; background: #151d18; color: var(--ink); width: min(280px, 100%); text-align: center; }
 .err { color: var(--bad); font-size: 15px; }
 #toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 150px); transform: translateX(-50%); background: var(--glass); color: var(--ink); padding: 8px 14px; border-radius: 12px; font-size: 14px; max-width: calc(100% - 32px); text-align: center; }
+#confirm {
+  position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 64px); transform: translateX(-50%);
+  width: min(360px, calc(100% - 24px)); padding: 10px 12px; border-radius: 14px;
+  background: rgba(11,16,13,0.86); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,216,77,0.75); display: flex; flex-direction: column; gap: 8px;
+}
+body.card-on #confirm { visibility: hidden; }
+#confirm .q { font-size: 15px; line-height: 1.35; }
+#confirm .q strong { font-family: var(--font-display); font-size: 24px; color: var(--tag); font-variant-numeric: tabular-nums; }
+#confirm input { width: 100%; }
+#confirm .acts { display: flex; gap: 8px; }
+#confirm .acts button { flex: 1; appearance: none; border: 0; border-radius: 10px; padding: 11px 8px; font: 600 16px var(--font-body); cursor: pointer; }
+#confirm .acts .ok-b { background: var(--tag); color: var(--tag-ink); }
+#confirm .acts .alt-b { background: #26332b; color: var(--ink); }
+.linkb { appearance: none; border: 0; background: rgba(0,0,0,0.12); color: var(--tag-ink); font: 600 13px var(--font-body); border-radius: 999px; padding: 5px 12px; cursor: pointer; align-self: flex-start; }
+#savedScreen { justify-content: flex-start; overflow-y: auto; }
+#savedList { list-style: none; margin: 0; padding: 0; width: min(420px, 100%); display: flex; flex-direction: column; gap: 6px; text-align: left; }
+#savedList li { background: #151d18; border-radius: 10px; padding: 8px 12px; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; }
+#savedList .p { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--tag); font-variant-numeric: tabular-nums; }
+#savedList .d { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+.lt { display: flex; align-items: center; gap: 8px; }
+.homeb { appearance: none; border: 0; background: var(--glass); color: var(--ink); font: 600 14px var(--font-body); padding: 6px 10px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+.btn.big { display: flex; flex-direction: column; gap: 4px; width: min(320px, 100%); padding: 22px; font-size: 22px; font-family: var(--font-display); font-weight: 700; }
+.btn.big span { font: 400 14px var(--font-body); opacity: 0.8; }
+.btn.alt { background: var(--shelf); color: #fff; }
+.btn.ghost { background: transparent; color: var(--muted); border: 1px solid #3a4a41; }
+.btn.sm { min-width: 0; padding: 12px 16px; font-size: 16px; }
+#listScreen { justify-content: flex-start; overflow-y: auto; gap: 12px; }
+.mic { appearance: none; border: 0; width: 132px; height: 132px; border-radius: 50%; background: var(--tag); color: var(--tag-ink); font: 700 20px var(--font-display); cursor: pointer; flex: none; }
+.mic.on { background: var(--bad); color: #fff; animation: pulse 0.9s ease-in-out infinite alternate; }
+.addrow { display: flex; gap: 8px; width: min(420px, 100%); }
+.addrow input[type="text"] { flex: 1; width: auto; text-align: left; min-width: 0; }
+#shopList { list-style: none; margin: 0; padding: 0; width: min(420px, 100%); display: flex; flex-direction: column; gap: 6px; text-align: left; }
+#shopList li { display: flex; align-items: center; gap: 10px; background: #151d18; border-radius: 10px; padding: 8px 10px; }
+#shopList .tx { flex: 1; font-size: 17px; }
+#shopList li.done .tx { text-decoration: line-through; color: var(--muted); }
+#shopList .chk { appearance: none; width: 30px; height: 30px; border-radius: 8px; border: 2px solid var(--tag); background: transparent; color: var(--tag); font-weight: 700; cursor: pointer; flex: none; }
+#shopList li.done .chk { background: var(--tag); color: var(--tag-ink); }
+#shopList .del { appearance: none; border: 0; background: transparent; color: var(--muted); font-size: 24px; line-height: 1; padding: 0 6px; cursor: pointer; }
+.ghostlink { appearance: none; border: 0; background: transparent; color: var(--muted); text-decoration: underline; font: 14px var(--font-body); cursor: pointer; }
 [hidden] { display: none !important; }
 @media (prefers-reduced-motion: reduce) { #reticle.busy { animation: none; } #card, #box { transition: none; } }
 </style>
@@ -142,7 +182,10 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
 <div id="flash" aria-hidden="true"></div>
 
 <div class="top">
-  <span class="brand">Prateleira<span class="ver">v9</span></span>
+  <div class="lt">
+    <button type="button" id="homeBtn" class="homeb" aria-label="Voltar ao início">‹ Início</button>
+    <span class="brand">Prateleira<span class="ver">v10</span></span>
+  </div>
   <div class="seg" role="group" aria-label="Modo da IA">
     <button type="button" id="mFast" aria-pressed="true">Rápido</button>
     <button type="button" id="mPrecise" aria-pressed="false">Preciso</button>
@@ -154,6 +197,23 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
 <button type="button" id="tapStart" hidden>Toque na tela para começar<span>ativa o bip de produto encontrado</span></button>
 <button type="button" id="tagf" aria-live="polite" hidden></button>
 <div id="card"></div>
+<div id="confirm" role="group" aria-label="Confirmar preço da prateleira" hidden>
+  <div class="q" id="cfQ" aria-live="polite"></div>
+  <form id="cfForm" hidden>
+    <input type="text" id="cfInput" inputmode="decimal" autocomplete="off" placeholder="ex.: 8,99" aria-label="Preço na prateleira">
+  </form>
+  <div class="acts">
+    <button type="button" class="ok-b" id="cfOk">Confirmar</button>
+    <button type="button" class="alt-b" id="cfEdit">Corrigir</button>
+  </div>
+</div>
+
+<section class="screen" id="savedScreen" hidden>
+  <h1>Preços salvos</h1>
+  <p>Guardados só neste celular, até o banco de dados ser conectado.</p>
+  <ul id="savedList"></ul>
+  <button class="btn" type="button" id="savedClose">Voltar à câmera</button>
+</section>
 
 <section class="screen" id="codeScreen" hidden>
   <h1>Prateleira</h1>
@@ -170,6 +230,29 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   <h1>Prateleira</h1>
   <p id="startMsg">Toque para abrir a câmera. Aponte para a prateleira e pare sobre um produto.</p>
   <button class="btn" type="button" id="startBtn">Abrir câmera</button>
+  <button class="btn ghost" type="button" id="startHome">Início</button>
+</section>
+
+<section class="screen" id="homeScreen" hidden>
+  <h1>Prateleira</h1>
+  <p>O que você quer fazer agora?</p>
+  <button class="btn big" type="button" id="goList">Minha lista de compras<span>fale, digite ou risque itens</span></button>
+  <button class="btn big alt" type="button" id="goShelf">Consultar prateleira<span>aponte a câmera no mercado</span></button>
+</section>
+
+<section class="screen" id="listScreen" hidden>
+  <h1>Minha lista</h1>
+  <button type="button" class="mic" id="micBtn">Falar itens</button>
+  <p id="micMsg" aria-live="polite">Ex.: "arroz, feijão e detergente"</p>
+  <form id="addForm" class="addrow">
+    <input type="text" id="addInput" autocomplete="off" placeholder="ou digite um item" aria-label="Novo item da lista">
+    <button class="btn sm" type="submit">Adicionar</button>
+  </form>
+  <ul id="shopList"></ul>
+  <p id="listEmpty">Sua lista está vazia.</p>
+  <button type="button" class="ghostlink" id="clearDone" hidden>Apagar itens riscados</button>
+  <button class="btn" type="button" id="listShelf">Ir para a prateleira</button>
+  <button class="btn ghost" type="button" id="listHome">Início</button>
 </section>
 
 <script>
@@ -196,6 +279,11 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   let last = null;               // último produto identificado
   let prevFrame = null;
   let wakeLock = null;
+  let cameraOn = false;          // câmera ligada (modo prateleira)
+  let loopStarted = false;
+  let editing = false;           // pessoa digitando o preço: a IA espera
+  let pauseUntil = 0;            // pausa curta enquanto a pessoa toca na confirmação
+  let lastMs = 0;
 
   try { code = localStorage.getItem("prateleira-chave-gemini") || ""; } catch (e) {}
   // Link de teste: a chave pode vir no final do endereço (#chave=...). Ela é guardada neste
@@ -239,9 +327,10 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       });
       video.srcObject = stream;
       await video.play();
-      $("startScreen").hidden = true;
+      ["startScreen", "homeScreen", "listScreen", "savedScreen"].forEach((id) => { $(id).hidden = true; });
       try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
-      requestAnimationFrame(loop);
+      cameraOn = true; needMove = false; stillSince = 0; prevFrame = null;
+      if (!loopStarted) { loopStarted = true; requestAnimationFrame(loop); }
       if (soundOn && !audioReady) $("tapStart").hidden = false;
       loadModels().catch((e) => { if (e && e.kind === "key") askCode("A chave não foi aceita pelo Google. Confira e cole de novo."); });
       return true;
@@ -255,7 +344,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   }
   $("startBtn").onclick = startCamera;
   document.addEventListener("visibilitychange", async () => {
-    if (document.visibilityState === "visible" && wakeLock === null) {
+    if (document.visibilityState === "visible" && cameraOn && wakeLock === null) {
       try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
     }
   });
@@ -280,7 +369,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
 
   function loop(t) {
     requestAnimationFrame(loop);
-    if (!video.videoWidth || t - lastSample < 100) return;
+    if (!cameraOn || !video.videoWidth || t - lastSample < 100) return;
     lastSample = t;
     const m = motionLevel();
     if (m > MOVE_LEVEL) {
@@ -292,7 +381,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     if (m < STILL_LEVEL) {
       if (!stillSince) stillSince = t;
       if (!busy && !needMove) reticle.className = "steady";
-      if (!busy && !needMove && t - stillSince > STILL_MS && Date.now() - lastCall > MIN_GAP_MS) identify();
+      if (!busy && !needMove && !editing && Date.now() > pauseUntil && t - stillSince > STILL_MS && Date.now() - lastCall > MIN_GAP_MS) identify();
     }
   }
 
@@ -451,10 +540,12 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   }
 
   function handleResult(r, ms) {
+    lastMs = ms;
     if (r.tipo === "etiqueta" && last && r.corresponde_ao_ultimo && r.preco > 0) {
-      last.preco_etiqueta = r.preco;
+      if (!last.preco_confirmado) { last.preco_etiqueta = r.preco; last.preco_lido = r.preco; }
       lastRect = null;
       renderCard(last, ms, "Preço local lido da etiqueta.");
+      askPrice(last);
       signal("ok");
       return;
     }
@@ -472,12 +563,15 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       r.produto = String(r.produto).trim() + " " + tam;
     }
     const same = !!(last && last.produto === r.produto);
-    if (same && !r.preco_etiqueta && last.preco_etiqueta) r.preco_etiqueta = last.preco_etiqueta;
+    if (r.preco_etiqueta > 0) r.preco_lido = r.preco_etiqueta;
+    if (same && !r.preco_etiqueta && last.preco_etiqueta) { r.preco_etiqueta = last.preco_etiqueta; r.preco_lido = last.preco_lido; }
+    if (same && last.preco_confirmado) { r.preco_etiqueta = last.preco_etiqueta; r.preco_lido = last.preco_lido; r.preco_confirmado = true; }
     if (same && last.preco_tipico > 0) r.preco_tipico = last.preco_tipico;
     last = r;
     showBox(r.caixa);
     renderCard(r, ms);
-    if (!same) signal(r.confianca === "alta" ? "ok" : "check");
+    askPrice(r);
+    if (!same) { signal(r.confianca === "alta" ? "ok" : "check"); tickFromList(r); }
   }
 
   // ---------- Bip, vibração e destaque ao fixar o produto ----------
@@ -603,7 +697,8 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     const here = el("div", "here");
     if (r.preco_etiqueta > 0) {
       here.append(document.createTextNode("Aqui: "), el("strong", "", fmt(r.preco_etiqueta)));
-      if (note) here.append(el("span", "small", "  " + note));
+      if (r.preco_confirmado) here.append(el("span", "small", "  confirmado e salvo"));
+      else if (note) here.append(el("span", "small", "  " + note));
     } else {
       here.textContent = "Não vi o preço aqui. Aponte para a etiqueta da prateleira e pare.";
     }
@@ -617,6 +712,13 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
       list.append(row);
     });
     tag.append(list, el("span", "small", "Preços de outros mercados: exemplo, até a base de preços ser conectada."));
+    const n = lerPrecos().length;
+    if (n) {
+      const b = el("button", "linkb", "Ver preços salvos (" + n + ")");
+      b.type = "button";
+      b.addEventListener("click", (e) => { e.stopPropagation(); showSaved(); });
+      tag.append(b);
+    }
     card.textContent = "";
     card.append(tag, el("span", "small", "Toque para fechar"));
     showTag(r);
@@ -637,7 +739,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     });
     const here = el("span", "row here");
     if (r.preco_etiqueta > 0) {
-      here.append(el("span", "st", "Aqui"), el("span", "pr", fmt(r.preco_etiqueta)));
+      here.append(el("span", "st", r.preco_confirmado ? "Aqui ✓" : "Aqui"), el("span", "pr", fmt(r.preco_etiqueta)));
     } else {
       here.append(el("span", "st", "Aqui: preço não lido"));
     }
@@ -657,7 +759,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     if (tagf.hidden) return;
     tagf.style.opacity = "0.72";
     if (!holdTimer) holdTimer = setTimeout(function expire() {
-      if (busy) { holdTimer = setTimeout(expire, 1000); return; }
+      if (busy || editing) { holdTimer = setTimeout(expire, 1000); return; }
       holdTimer = null;
       hideTag();
     }, TAG_HOLD_MS);
@@ -683,6 +785,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     if (!tagf.hidden) { tagf.style.opacity = "0"; setTimeout(() => { if (tagf.style.opacity === "0") tagf.hidden = true; }, 220); }
     card.classList.remove("on");
     document.body.classList.remove("card-on");
+    if (!editing) closeConfirm();
   }
   tagf.addEventListener("click", () => {
     const open = !card.classList.contains("on");
@@ -691,6 +794,302 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   });
   card.addEventListener("click", () => { card.classList.remove("on"); document.body.classList.remove("card-on"); });
   window.addEventListener("resize", () => { if (!tagf.hidden) placeTag(); });
+
+  // ---------- Registro de preços da prateleira ----------
+  // Por enquanto cada preço confirmado fica guardado só neste celular.
+  // Quando o banco de dados for escolhido, basta mudar salvarPreco() para também enviar o registro para lá.
+  const STORE_KEY = "prateleira-precos-v1";
+  function lerPrecos() {
+    try { const a = JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+  }
+  function salvarPreco(reg) {
+    const lista = lerPrecos();
+    lista.push(reg);
+    while (lista.length > 500) lista.shift();
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(lista)); return true; } catch (e) { return false; }
+  }
+
+  // ---------- Confirmação do preço na tela ----------
+  const cf = $("confirm");
+  ["touchstart", "pointerdown"].forEach((ev) => cf.addEventListener(ev, () => { pauseUntil = Date.now() + 3000; }, { passive: true }));
+
+  function askPrice(r) {
+    if (!r || r.preco_confirmado) { closeConfirm(); return; }
+    editing = false;
+    $("cfForm").hidden = true;
+    const q = $("cfQ");
+    q.textContent = "";
+    if (r.preco_etiqueta > 0) {
+      q.append(document.createTextNode("Preço na etiqueta: "), el("strong", "", fmt(r.preco_etiqueta)), document.createTextNode("  Confere?"));
+      $("cfOk").hidden = false; $("cfOk").textContent = "Confirmar";
+      $("cfEdit").textContent = "Corrigir";
+    } else {
+      q.textContent = "Não li o preço da prateleira. Quer informar?";
+      $("cfOk").hidden = true;
+      $("cfEdit").textContent = "Informar preço";
+    }
+    cf.hidden = false;
+  }
+  function closeConfirm() {
+    const c = $("confirm");
+    if (c) c.hidden = true;
+    editing = false;
+    const i = $("cfInput"); if (i) i.blur();
+  }
+  function openEdit() {
+    editing = true;
+    $("cfQ").textContent = "Digite o preço da prateleira:";
+    $("cfForm").hidden = false;
+    $("cfInput").value = last && last.preco_etiqueta > 0 ? last.preco_etiqueta.toFixed(2).replace(".", ",") : "";
+    $("cfOk").hidden = false; $("cfOk").textContent = "Salvar";
+    $("cfEdit").textContent = "Cancelar";
+    $("cfInput").focus();
+  }
+  function parsePrice(txt) {
+    let s = String(txt || "").replace(/[^\d,.]/g, "");
+    if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+    const v = parseFloat(s);
+    return v > 0 && v < 100000 ? Math.round(v * 100) / 100 : null;
+  }
+  function submitEdit() {
+    const v = parsePrice($("cfInput").value);
+    if (!v) { toast("Preço inválido. Use o formato 8,99."); return; }
+    savePrice(last, v);
+  }
+  function savePrice(r, preco) {
+    if (!r) { closeConfirm(); return; }
+    const lido = r.preco_lido > 0 ? r.preco_lido : null;
+    const origem = !lido ? "informado pelo usuário" : Math.abs(lido - preco) < 0.005 ? "lido pela IA e confirmado" : "lido pela IA e corrigido";
+    const ok = salvarPreco({
+      produto: r.produto, marca: r.marca || "", versao: r.versao || "", tamanho: r.tamanho || "",
+      preco: preco, origem: origem, preco_lido_ia: lido,
+      data: new Date().toISOString(),
+      mercado: null   // a identificar (localização ou escolha do usuário), quando o banco existir
+    });
+    r.preco_etiqueta = preco;
+    r.preco_confirmado = true;
+    closeConfirm();
+    renderCard(r, lastMs);
+    beep("ok");
+    toast(ok ? "Preço salvo neste celular." : "Não consegui salvar neste celular.");
+  }
+  $("cfOk").onclick = () => { if (editing) submitEdit(); else if (last) savePrice(last, last.preco_etiqueta); };
+  $("cfEdit").onclick = () => { if (editing) askPrice(last); else openEdit(); };
+  $("cfForm").addEventListener("submit", (e) => { e.preventDefault(); submitEdit(); });
+
+  // ---------- Lista de preços salvos ----------
+  function showSaved() {
+    const ul = $("savedList");
+    ul.textContent = "";
+    const lista = lerPrecos().slice().reverse();
+    if (!lista.length) ul.append(el("li", "", "Nenhum preço salvo ainda."));
+    lista.forEach((p) => {
+      const li = el("li");
+      let quando = "";
+      try { quando = new Date(p.data).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }); } catch (e) {}
+      li.append(el("span", "", p.produto), el("span", "p", fmt(Number(p.preco) || 0)), el("span", "d", quando + " · " + p.origem));
+      ul.append(li);
+    });
+    $("savedScreen").hidden = false;
+  }
+  $("savedClose").onclick = () => { $("savedScreen").hidden = true; };
+
+  // ---------- Tela inicial ----------
+  function stopCamera() {
+    cameraOn = false;
+    if (video.srcObject) { video.srcObject.getTracks().forEach((t) => t.stop()); video.srcObject = null; }
+    try { if (wakeLock) wakeLock.release(); } catch (e) {}
+    wakeLock = null;
+    editing = false;
+    hideBox(); hideTag(); closeConfirm();
+    $("tapStart").hidden = true;
+  }
+  function showHome() {
+    stopCamera();
+    ["startScreen", "listScreen", "savedScreen"].forEach((id) => { $(id).hidden = true; });
+    $("homeScreen").hidden = false;
+  }
+  $("goShelf").onclick = startCamera;
+  $("goList").onclick = () => { $("homeScreen").hidden = true; showList(); };
+  $("homeBtn").onclick = showHome;
+  $("startHome").onclick = showHome;
+
+  // ---------- Lista de compras ----------
+  const LIST_KEY = "prateleira-lista-v1";
+  let shop = [];
+  try { shop = JSON.parse(localStorage.getItem(LIST_KEY) || "[]"); if (!Array.isArray(shop)) shop = []; } catch (e) { shop = []; }
+  function saveList() { try { localStorage.setItem(LIST_KEY, JSON.stringify(shop)); } catch (e) {} }
+
+  function showList() { renderList(); $("listScreen").hidden = false; }
+  function renderList() {
+    const ul = $("shopList");
+    ul.textContent = "";
+    shop.forEach((it) => {
+      const li = el("li", it.feito ? "done" : "");
+      const chk = el("button", "chk", it.feito ? "✓" : "");
+      chk.type = "button";
+      chk.setAttribute("aria-label", (it.feito ? "Desmarcar " : "Marcar ") + it.texto);
+      chk.onclick = () => { it.feito = !it.feito; saveList(); renderList(); };
+      const del = el("button", "del", "×");
+      del.type = "button";
+      del.setAttribute("aria-label", "Apagar " + it.texto);
+      del.onclick = () => { shop = shop.filter((x) => x !== it); saveList(); renderList(); };
+      li.append(chk, el("span", "tx", it.texto), del);
+      ul.append(li);
+    });
+    $("listEmpty").hidden = shop.length > 0;
+    $("clearDone").hidden = !shop.some((x) => x.feito);
+  }
+  function addItems(items) {
+    let n = 0;
+    items.forEach((t) => {
+      const tx = String(t || "").trim().replace(/[.;]+$/, "");
+      if (!tx) return;
+      if (shop.some((x) => !x.feito && x.texto.toLowerCase() === tx.toLowerCase())) return;
+      shop.push({ texto: tx, feito: false, criado: new Date().toISOString() });
+      n++;
+    });
+    saveList(); renderList();
+    return n;
+  }
+  function splitLocal(text) {
+    return String(text).split(/[,;\n]|\s+e\s+/i).map((s) => s.trim()).filter(Boolean);
+  }
+  $("addForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = $("addInput").value;
+    if (addItems(splitLocal(v))) $("addInput").value = "";
+  });
+  $("clearDone").onclick = () => { shop = shop.filter((x) => !x.feito); saveList(); renderList(); };
+  $("listShelf").onclick = startCamera;
+  $("listHome").onclick = showHome;
+
+  // Risca da lista o item que acabou de ser reconhecido na prateleira.
+  const plain = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const STOP = new Set(["de", "do", "da", "dos", "das", "com", "sem", "para", "kg", "ml", "litro", "litros", "pacote", "caixa", "lata", "unidade", "unidades", "um", "uma", "dois", "duas"]);
+  function tickFromList(r) {
+    const prod = plain(r.produto + " " + (r.marca || "") + " " + (r.versao || ""));
+    const hit = shop.filter((it) => {
+      if (it.feito) return false;
+      const words = plain(it.texto).split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !/^\d/.test(w) && !STOP.has(w));
+      return words.length > 0 && words.every((w) => prod.includes(w));
+    });
+    if (!hit.length) return;
+    hit.forEach((it) => { it.feito = true; });
+    saveList();
+    toast("Riscado da lista: " + hit.map((x) => x.texto).join(", "));
+  }
+
+  // ---------- Lista por voz ----------
+  // 1º caminho: reconhecimento de voz do próprio navegador.
+  // 2º caminho (se o navegador não tiver): grava o áudio e manda para a IA do Google transcrever.
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let listening = false, rec = null, mediaRec = null, recTimer = null;
+  function micState(on, msg) {
+    listening = on;
+    $("micBtn").classList.toggle("on", on);
+    $("micBtn").textContent = on ? "Parar" : "Falar itens";
+    if (msg !== undefined) $("micMsg").textContent = msg;
+  }
+  $("micBtn").onclick = () => { if (listening) stopListening(); else startListening(); };
+
+  function startListening() {
+    if (!SR) { startRecorder(); return; }
+    let finalText = "", failed = false;
+    try {
+      rec = new SR();
+      rec.lang = "pt-BR"; rec.interimResults = true; rec.continuous = false;
+      rec.onresult = (e) => {
+        let interim = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const t = e.results[i][0].transcript;
+          if (e.results[i].isFinal) finalText += t + " "; else interim += t;
+        }
+        $("micMsg").textContent = (finalText + interim).trim() || "Ouvindo…";
+      };
+      rec.onerror = (e) => {
+        failed = true;
+        if (e.error === "service-not-allowed") { micState(false); startRecorder(); return; }
+        micState(false, e.error === "not-allowed" ? "O microfone foi bloqueado. Libere nas configurações do navegador." : "Não entendi. Toque e fale de novo.");
+      };
+      rec.onend = () => {
+        if (failed) return;
+        micState(false);
+        if (finalText.trim()) itemsFromVoice({ texto: finalText.trim() });
+        else $("micMsg").textContent = "Não ouvi nada. Toque e fale de novo.";
+      };
+      rec.start();
+      micState(true, "Ouvindo… fale os itens e faça uma pausa no fim");
+    } catch (e) { micState(false); startRecorder(); }
+  }
+  function stopListening() {
+    if (rec) try { rec.stop(); } catch (e) {}
+    if (mediaRec && mediaRec.state === "recording") mediaRec.stop();
+  }
+
+  async function startRecorder() {
+    if (!window.MediaRecorder || !navigator.mediaDevices) { micState(false, "Este navegador não grava voz. Digite os itens abaixo."); return; }
+    try {
+      const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const chunks = [];
+      mediaRec = new MediaRecorder(st);
+      mediaRec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+      mediaRec.onstop = async () => {
+        clearTimeout(recTimer);
+        st.getTracks().forEach((t) => t.stop());
+        micState(false, "Entendendo a lista…");
+        const type = (mediaRec.mimeType || "audio/mp4").split(";")[0];
+        const blob = new Blob(chunks, { type });
+        const b64 = await new Promise((ok) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(",")[1]); fr.readAsDataURL(blob); });
+        itemsFromVoice({ audio: { mime: type, data: b64 } });
+      };
+      mediaRec.start();
+      recTimer = setTimeout(() => { if (mediaRec.state === "recording") mediaRec.stop(); }, 20000);
+      micState(true, "Gravando… fale os itens e toque em Parar");
+    } catch (e) {
+      micState(false, "Não consegui usar o microfone. Libere o acesso e tente de novo.");
+    }
+  }
+
+  // A IA separa a fala em itens ("dois quilos de arroz e um detergente" vira dois itens).
+  async function itemsFromVoice(src) {
+    $("micMsg").textContent = "Entendendo a lista…";
+    let itens = null;
+    try { itens = await askGeminiItems(src); } catch (e) {}
+    if ((!itens || !itens.length) && src.texto) itens = splitLocal(src.texto);
+    if (!itens || !itens.length) { $("micMsg").textContent = "Não consegui entender. Tente de novo ou digite."; return; }
+    const n = addItems(itens);
+    $("micMsg").textContent = n ? (n === 1 ? "1 item adicionado." : n + " itens adicionados.") : "Esses itens já estavam na lista.";
+  }
+
+  async function askGeminiItems(src) {
+    if (!code) return null;
+    await loadModels();
+    const tries = pickModels();
+    const instr = [
+      "A pessoa está montando uma lista de compras de supermercado no Brasil.",
+      src.texto ? 'Ela disse: "' + String(src.texto).slice(0, 600) + '"' : "Ouça o áudio com a fala dela.",
+      'Responda só com JSON: {"itens":["arroz 5 kg","feijão preto","detergente"]}',
+      "Um item por produto, com quantidade, marca ou tamanho só se ela tiver dito. Não invente itens. Se não houver itens, use lista vazia."
+    ].join("\n");
+    const parts = [];
+    if (src.audio) parts.push({ inline_data: { mime_type: src.audio.mime, data: src.audio.data } });
+    parts.push({ text: instr });
+    for (const name of tries.slice(0, 3)) {
+      const res = await fetch(API + "/models/" + name + ":generateContent", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": code },
+        body: JSON.stringify({ contents: [{ role: "user", parts }], generationConfig: { responseMimeType: "application/json", temperature: 0.1, maxOutputTokens: 800 } })
+      });
+      if (res.status === 429 || res.status === 404) { if (res.status === 429) blocked.add(name); continue; }
+      if (!res.ok) continue;
+      const d = await res.json();
+      const p = (((d.candidates || [])[0] || {}).content || {}).parts || [];
+      const r = parseJSON(p.filter((x) => !x.thought).map((x) => x.text || "").join(""));
+      if (r && Array.isArray(r.itens)) return r.itens.map(String);
+    }
+    return null;
+  }
 
   // ---------- Código de acesso ----------
   function askCode(msg) {
@@ -708,7 +1107,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
     try { localStorage.setItem("prateleira-chave-gemini", v); } catch (err) {}
     models = null;
     $("codeScreen").hidden = true;
-    if (!video.srcObject) startCamera();
+    if (!cameraOn) showHome();
   });
 
   // ---------- Início ----------
@@ -719,7 +1118,7 @@ input[type="password"], input[type="text"] { font: 18px var(--font-body); paddin
   } else if (!code) {
     askCode("");
   } else {
-    startCamera();
+    showHome();
   }
 })();
 </script>
