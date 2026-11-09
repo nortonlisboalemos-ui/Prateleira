@@ -1,0 +1,17 @@
+rules_version = '2';
+// Regras da base colaborativa do Prateleira (Cloud Firestore).
+// Qualquer pessoa pode ler e acrescentar preços; ninguém pode alterar nem apagar registros.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /precos/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['produto','marca','marca_n','versao','tamanho','tamanho_n','preco','origem','mercado_id','mercado_nome','lat','lon','data','app'])
+        && request.resource.data.produto is string && request.resource.data.produto.size() <= 200
+        && request.resource.data.preco is number && request.resource.data.preco > 0 && request.resource.data.preco < 10000
+        && request.resource.data.mercado_id is string && request.resource.data.mercado_id.size() <= 120
+        && request.resource.data.data is timestamp
+        && request.resource.data.data < request.time + duration.value(1, 'h');
+      allow update, delete: if false;
+    }
+  }
+}

@@ -171,6 +171,23 @@ body.card-on #confirm { visibility: hidden; }
 #shopList .chk { appearance: none; width: 30px; height: 30px; border-radius: 8px; border: 2px solid var(--tag); background: transparent; color: var(--tag); font-weight: 700; cursor: pointer; flex: none; }
 #shopList li.done .chk { background: var(--tag); color: var(--tag-ink); }
 #shopList .del { appearance: none; border: 0; background: transparent; color: var(--muted); font-size: 24px; line-height: 1; padding: 0 6px; cursor: pointer; }
+.mkt {
+  position: fixed; left: max(14px, env(safe-area-inset-left, 0px)); top: calc(env(safe-area-inset-top, 0px) + 60px);
+  max-width: 58vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  appearance: none; border: 1px solid rgba(255,255,255,0.3); background: var(--glass); color: var(--ink);
+  font: 600 13px var(--font-body); padding: 6px 12px; border-radius: 999px; cursor: pointer;
+}
+#mktScreen { justify-content: flex-start; overflow-y: auto; gap: 12px; }
+#mktScreen h1 { font-size: 32px; }
+#mktList { list-style: none; margin: 0; padding: 0; width: min(420px, 100%); display: flex; flex-direction: column; gap: 6px; }
+#mktList button { width: 100%; appearance: none; border: 1px solid #3a4a41; background: #151d18; color: var(--ink); border-radius: 10px; padding: 10px 12px; text-align: left; font: 600 16px var(--font-body); cursor: pointer; display: flex; justify-content: space-between; gap: 10px; }
+#mktList button[aria-current="true"] { border-color: var(--tag); }
+#mktList .km { font-weight: 400; color: var(--muted); font-size: 14px; white-space: nowrap; }
+.tag .sec { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+.tag a { color: inherit; }
+#tagf .row.web .st { font-style: italic; }
+.price .val { white-space: nowrap; }
+.price .src { min-width: 0; overflow-wrap: anywhere; }
 .ghostlink { appearance: none; border: 0; background: transparent; color: var(--muted); text-decoration: underline; font: 14px var(--font-body); cursor: pointer; }
 [hidden] { display: none !important; }
 @media (prefers-reduced-motion: reduce) { #reticle.busy { animation: none; } #card, #box { transition: none; } }
@@ -185,7 +202,7 @@ body.card-on #confirm { visibility: hidden; }
 <div class="top">
   <div class="lt">
     <button type="button" id="homeBtn" class="homeb" aria-label="Voltar ao início">‹ Início</button>
-    <span class="brand">Prateleira<span class="ver">v11</span></span>
+    <span class="brand">Prateleira<span class="ver">v12</span></span>
   </div>
   <div class="seg" role="group" aria-label="Modo da IA">
     <button type="button" id="mFast" aria-pressed="true">Rápido</button>
@@ -193,6 +210,7 @@ body.card-on #confirm { visibility: hidden; }
   </div>
 </div>
 <button type="button" id="sndBtn" class="snd" aria-pressed="true">Bip ligado</button>
+<button type="button" id="mktBtn" class="mkt">Mercado: escolher</button>
 <div id="hint">Mire num produto e pare um instante</div>
 <div id="toast" role="status" hidden></div>
 <button type="button" id="tapStart" hidden>Toque na tela para começar<span>ativa o bip de produto encontrado</span></button>
@@ -211,7 +229,7 @@ body.card-on #confirm { visibility: hidden; }
 
 <section class="screen" id="savedScreen" hidden>
   <h1>Preços salvos</h1>
-  <p>Guardados só neste celular, até o banco de dados ser conectado.</p>
+  <p id="savedInfo"></p>
   <ul id="savedList"></ul>
   <button class="btn" type="button" id="savedClose">Voltar à câmera</button>
 </section>
@@ -232,6 +250,18 @@ body.card-on #confirm { visibility: hidden; }
   <p id="startMsg">Toque para abrir a câmera. Aponte para a prateleira e pare sobre um produto.</p>
   <button class="btn" type="button" id="startBtn">Abrir câmera</button>
   <button class="btn ghost" type="button" id="startHome">Início</button>
+</section>
+
+<section class="screen" id="mktScreen" hidden>
+  <h1>Em qual mercado você está?</h1>
+  <p id="mktInfo">Os preços que você registrar ficam ligados a este mercado.</p>
+  <ul id="mktList"></ul>
+  <form id="mktForm" class="addrow">
+    <input type="text" id="mktInput" autocomplete="off" placeholder="Outro: digite o nome" aria-label="Nome do mercado">
+    <button class="btn sm" type="submit">Usar</button>
+  </form>
+  <button class="btn" type="button" id="mktLocate">Localizar de novo</button>
+  <button class="btn ghost" type="button" id="mktClose">Voltar à câmera</button>
 </section>
 
 <section class="screen" id="homeScreen" hidden>
@@ -284,6 +314,7 @@ body.card-on #confirm { visibility: hidden; }
   let loopStarted = false;
   let editing = false;           // pessoa digitando o preço: a IA espera
   let pauseUntil = 0;            // pausa curta enquanto a pessoa toca na confirmação
+  let sheetOpen = false;         // tela de mercado ou de preços salvos aberta: a IA espera
   let lastMs = 0;
 
   try { code = localStorage.getItem("prateleira-chave-gemini") || ""; } catch (e) {}
@@ -331,6 +362,8 @@ body.card-on #confirm { visibility: hidden; }
       ["startScreen", "homeScreen", "listScreen", "savedScreen"].forEach((id) => { $(id).hidden = true; });
       try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
       cameraOn = true; needMove = false; stillSince = 0; prevFrame = null;
+      detectarMercado(false);
+      esvaziarFila();
       if (!loopStarted) { loopStarted = true; requestAnimationFrame(loop); }
       if (soundOn && !audioReady) $("tapStart").hidden = false;
       loadModels().catch((e) => { if (e && e.kind === "key") askCode("A chave não foi aceita pelo Google. Confira e cole de novo."); });
@@ -344,6 +377,7 @@ body.card-on #confirm { visibility: hidden; }
     }
   }
   $("startBtn").onclick = startCamera;
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") gravarPendente(); });
   document.addEventListener("visibilitychange", async () => {
     if (document.visibilityState === "visible" && cameraOn && wakeLock === null) {
       try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
@@ -382,7 +416,7 @@ body.card-on #confirm { visibility: hidden; }
     if (m < STILL_LEVEL) {
       if (!stillSince) stillSince = t;
       if (!busy && !needMove) reticle.className = "steady";
-      if (!busy && !needMove && !editing && Date.now() > pauseUntil && t - stillSince > STILL_MS && Date.now() - lastCall > MIN_GAP_MS) identify();
+      if (!busy && !needMove && !editing && !sheetOpen && Date.now() > pauseUntil && t - stillSince > STILL_MS && Date.now() - lastCall > MIN_GAP_MS) identify();
     }
   }
 
@@ -543,7 +577,7 @@ body.card-on #confirm { visibility: hidden; }
   function handleResult(r, ms) {
     lastMs = ms;
     if (r.tipo === "etiqueta" && last && r.corresponde_ao_ultimo && r.preco > 0) {
-      if (!last.preco_confirmado) { last.preco_etiqueta = r.preco; last.preco_lido = r.preco; }
+      if (!last.preco_confirmado) { last.preco_etiqueta = r.preco; last.preco_lido = r.preco; marcarPendente(last); }
       lastRect = null;
       renderCard(last, ms, "Preço local lido da etiqueta.");
       askPrice(last);
@@ -568,11 +602,18 @@ body.card-on #confirm { visibility: hidden; }
     if (same && !r.preco_etiqueta && last.preco_etiqueta) { r.preco_etiqueta = last.preco_etiqueta; r.preco_lido = last.preco_lido; }
     if (same && last.preco_confirmado) { r.preco_etiqueta = last.preco_etiqueta; r.preco_lido = last.preco_lido; r.preco_confirmado = true; }
     if (same && last.preco_tipico > 0) r.preco_tipico = last.preco_tipico;
+    if (same) { r._web = last._web; r._nuvem = last._nuvem; r.preco_salvo = last.preco_salvo; }
+    else gravarPendente();   // o produto anterior saiu da mira: grava o preço lido dele, se ficou sem resposta
     last = r;
+    marcarPendente(r);
     showBox(r.caixa);
     renderCard(r, ms);
     askPrice(r);
-    if (!same) { signal(r.confianca === "alta" ? "ok" : "check"); tickFromList(r); }
+    if (!same) {
+      signal(r.confianca === "alta" ? "ok" : "check");
+      tickFromList(r);
+      consultarPrecos(r);
+    }
   }
 
   // ---------- Bip, vibração e destaque ao fixar o produto ----------
@@ -670,24 +711,24 @@ body.card-on #confirm { visibility: hidden; }
 
   // ---------- Etiqueta de preços ----------
   const fmt = (n) => "R$ " + n.toFixed(2).replace(".", ",");
-  function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
-  function examplePrices(r) {
-    const seed = hash((r.produto || "") + (r.tamanho || ""));
-    const ref = r.preco_etiqueta > 0 ? r.preco_etiqueta
-      : r.preco_tipico > 0 ? r.preco_tipico * 1.1
-      : 6 + (seed % 3400) / 100;
-    const d1 = 0.80 + ((seed >>> 8) % 10) / 100;
-    const d2 = Math.min(0.98, d1 + 0.04 + ((seed >>> 16) % 5) / 100);
-    const lojas = ["Angeloni", "Giassi", "Bistek", "Imperatriz", "Fort", "Hippo"];
-    const i1 = seed % lojas.length, i2 = (i1 + 1 + ((seed >>> 3) % (lojas.length - 1))) % lojas.length;
-    return [
-      { val: ref * d1, loja: lojas[i1], fonte: "nota fiscal" },
-      { val: ref * d2, loja: lojas[i2], fonte: (seed >>> 4) % 2 ? "site" : "nota fiscal" }
-    ];
+  // Preços para comparar: outros mercados (registrados pelos usuários) + ofertas achadas na internet.
+  function ofertas(r) {
+    const outros = outrosMercados(r).map((p) => Object.assign({ web: false }, p));
+    const web = (r._web && r._web.ofertas || []).map((p) => ({ val: p.preco, loja: p.loja, fonte: "internet", web: true }));
+    return { outros, web, todas: outros.concat(web).sort((a, b) => a.val - b.val) };
+  }
+  function shortName(n) {
+    const s = String(n || "").replace(/^(super|hiper)?\s*mercados?\s+|^atacad(o|ista)\s+|^supermercados?\s+/i, "")
+      .replace(/\s+(online|delivery|app|site|e-?commerce)$/i, "").trim() || String(n || "");
+    return s.length > 14 ? s.slice(0, 13) + "…" : s;
+  }
+  function haDias(t) {
+    const d = Math.floor((Date.now() - t) / 864e5);
+    return d <= 0 ? "hoje" : d === 1 ? "ontem" : "há " + d + " dias";
   }
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
 
-  function renderCard(r, ms, note) {
+  function renderCard(r, ms, note, keep) {
     const conf = ["alta", "media", "baixa"].includes(r.confianca) ? r.confianca : "baixa";
     const tag = el("div", "tag");
     const head = el("div", "head");
@@ -704,15 +745,43 @@ body.card-on #confirm { visibility: hidden; }
       here.textContent = "Não vi o preço aqui. Aponte para a etiqueta da prateleira e pare.";
     }
     tag.append(here);
-    const list = el("div", "prices");
-    examplePrices(r).forEach((p, i) => {
+    const of = ofertas(r);
+    const linha = (p, i, src) => {
       const row = el("div", "price");
       const mid = el("span", "val", fmt(p.val));
-      if (r.preco_etiqueta > 0) { mid.append(el("span", "less", "  " + Math.round((1 - p.val / r.preco_etiqueta) * 100) + "% menos")); }
-      row.append(el("span", "rank", (i + 1) + "º"), mid, el("span", "src", p.loja + " · " + p.fonte));
-      list.append(row);
-    });
-    tag.append(list, el("span", "small", "Preços de outros mercados: exemplo, até a base de preços ser conectada."));
+      if (r.preco_etiqueta > 0) {
+        const d = Math.round((1 - p.val / r.preco_etiqueta) * 100);
+        mid.append(el("span", "less", d > 0 ? "  " + d + "% menos" : d < 0 ? "  " + (-d) + "% mais" : "  igual"));
+      }
+      row.append(el("span", "rank", (i + 1) + "º"), mid, el("span", "src", src));
+      return row;
+    };
+    tag.append(el("div", "sec", "Outros mercados (registrados pelos usuários)"));
+    const l1 = el("div", "prices");
+    of.outros.slice(0, 5).forEach((p, i) => l1.append(linha(p, i, p.loja + " · " + haDias(p.t))));
+    if (!of.outros.length) l1.append(el("span", "small", baseOn()
+      ? "Ainda ninguém registrou este produto em outro mercado."
+      : "Base colaborativa ainda não conectada: aparecem só preços salvos neste celular."));
+    tag.append(l1, el("div", "sec", "Na internet"));
+    const l2 = el("div", "prices");
+    const w = r._web || {};
+    if (of.web.length) of.web.forEach((p, i) => l2.append(linha(p, i, p.loja)));
+    else l2.append(el("span", "small", w.estado === "buscando" ? "Buscando preços na internet…"
+      : w.estado === "limite" ? "Limite gratuito de buscas atingido por hoje."
+      : w.estado === "pulado" ? "Busca na internet só com o produto e o tamanho bem identificados."
+      : w.estado ? "Nenhum preço confiável encontrado na internet." : "Busca na internet ainda não feita."));
+    tag.append(l2);
+    if (w.fontes && w.fontes.length) {
+      const fs = el("span", "small", "Fontes: ");
+      w.fontes.slice(0, 4).forEach((f, i) => {
+        const a = el("a", "", f.titulo); a.href = f.url; a.target = "_blank"; a.rel = "noopener";
+        a.addEventListener("click", (e) => e.stopPropagation());
+        if (i) fs.append(document.createTextNode(", "));
+        fs.append(a);
+      });
+      tag.append(fs);
+    }
+    tag.append(el("span", "small", "Preços da internet vêm de busca automática e podem estar desatualizados."));
     const n = lerPrecos().length;
     if (n) {
       const b = el("button", "linkb", "Ver preços salvos (" + n + ")");
@@ -722,22 +791,26 @@ body.card-on #confirm { visibility: hidden; }
     }
     card.textContent = "";
     card.append(tag, el("span", "small", "Toque para fechar"));
-    showTag(r);
+    showTag(r, keep);
   }
+  // Atualiza o cartão e a etiqueta quando chegam preços novos, sem piscar nem reposicionar.
+  function refresh(r) { if (r && last === r && cameraOn) renderCard(r, lastMs, undefined, true); }
 
   // ---------- Etiqueta flutuante (opção A) ----------
   const tagf = $("tagf");
-  function showTag(r) {
+  function showTag(r, keep) {
+    if (keep && tagf.hidden) return;
     const conf = ["alta", "media", "baixa"].includes(r.confianca) ? r.confianca : "baixa";
-    const [p1, p2] = examplePrices(r);
+    const top2 = ofertas(r).todas.slice(0, 2);
     tagf.textContent = "";
     if (conf !== "alta") tagf.append(el("span", "warn", "confirme"));
     tagf.append(el("span", "nm", r.produto));
-    [p1, p2].forEach((p) => {
-      const row = el("span", "row");
-      row.append(el("span", "st", p.loja), el("span", "pr", fmt(p.val)));
+    top2.forEach((p) => {
+      const row = el("span", "row" + (p.web ? " web" : ""));
+      row.append(el("span", "st", shortName(p.loja) + (p.web ? "*" : "")), el("span", "pr", fmt(p.val)));
       tagf.append(row);
     });
+    if (!top2.length) tagf.append(el("span", "sub", r._web && r._web.estado === "buscando" ? "Buscando preços…" : "Sem preços de outros mercados ainda"));
     const here = el("span", "row here");
     if (r.preco_etiqueta > 0) {
       here.append(el("span", "st", r.preco_confirmado ? "Aqui ✓" : "Aqui"), el("span", "pr", fmt(r.preco_etiqueta)));
@@ -745,8 +818,9 @@ body.card-on #confirm { visibility: hidden; }
       here.append(el("span", "st", "Aqui: preço não lido"));
     }
     tagf.append(here);
-    tagf.append(el("span", "demo", "preços de exemplo · toque para mais"));
-    tagf.setAttribute("aria-label", r.produto + ": " + p1.loja + " " + fmt(p1.val) + ", " + p2.loja + " " + fmt(p2.val) + ". Toque para ver mais.");
+    tagf.append(el("span", "demo", (top2.some((p) => p.web) ? "* internet · " : "") + "toque para mais"));
+    tagf.setAttribute("aria-label", r.produto + ": " + (top2.length ? top2.map((p) => p.loja + " " + fmt(p.val)).join(", ") : "sem preços de outros mercados") + ". Toque para ver mais.");
+    if (keep) { placeTag(); return; }
     clearTimeout(holdTimer); holdTimer = null;
     tagf.hidden = false;
     tagf.style.opacity = "1";
@@ -797,8 +871,8 @@ body.card-on #confirm { visibility: hidden; }
   window.addEventListener("resize", () => { if (!tagf.hidden) placeTag(); });
 
   // ---------- Registro de preços da prateleira ----------
-  // Por enquanto cada preço confirmado fica guardado só neste celular.
-  // Quando o banco de dados for escolhido, basta mudar salvarPreco() para também enviar o registro para lá.
+  // Cada preço fica guardado neste celular e, se a base colaborativa estiver conectada (BASE, mais abaixo),
+  // também é enviado para ela por registrar().
   const STORE_KEY = "prateleira-precos-v1";
   function lerPrecos() {
     try { const a = JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; }
@@ -861,18 +935,14 @@ body.card-on #confirm { visibility: hidden; }
     if (!r) { closeConfirm(); return; }
     const lido = r.preco_lido > 0 ? r.preco_lido : null;
     const origem = !lido ? "informado pelo usuário" : Math.abs(lido - preco) < 0.005 ? "lido pela IA e confirmado" : "lido pela IA e corrigido";
-    const ok = salvarPreco({
-      produto: r.produto, marca: r.marca || "", versao: r.versao || "", tamanho: r.tamanho || "",
-      preco: preco, origem: origem, preco_lido_ia: lido,
-      data: new Date().toISOString(),
-      mercado: null   // a identificar (localização ou escolha do usuário), quando o banco existir
-    });
+    if (pendente === r) pendente = null;
+    const st = registrar(r, preco, origem);
     r.preco_etiqueta = preco;
     r.preco_confirmado = true;
     closeConfirm();
     renderCard(r, lastMs);
     beep("ok");
-    toast(ok ? "Preço salvo neste celular." : "Não consegui salvar neste celular.");
+    toast(st);
   }
   $("cfOk").onclick = () => { if (editing) submitEdit(); else if (last) savePrice(last, last.preco_etiqueta); };
   $("cfEdit").onclick = () => { if (editing) askPrice(last); else openEdit(); };
@@ -888,16 +958,26 @@ body.card-on #confirm { visibility: hidden; }
       const li = el("li");
       let quando = "";
       try { quando = new Date(p.data).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }); } catch (e) {}
-      li.append(el("span", "", p.produto), el("span", "p", fmt(Number(p.preco) || 0)), el("span", "d", quando + " · " + p.origem));
+      li.append(el("span", "", p.produto), el("span", "p", fmt(Number(p.preco) || 0)),
+        el("span", "d", quando + " · " + (p.mercado_nome || "mercado não identificado") + " · " + p.origem));
       ul.append(li);
     });
+    const fila = lerFila().length;
+    $("savedInfo").textContent = (baseOn()
+      ? "Os preços com mercado identificado também vão para a base colaborativa."
+      : "Guardados só neste celular: a base colaborativa ainda não foi conectada.")
+      + (fila ? " " + fila + " aguardando envio." : "");
     $("savedScreen").hidden = false;
+    sheetOpen = true;
   }
-  $("savedClose").onclick = () => { $("savedScreen").hidden = true; };
+  $("savedClose").onclick = () => { $("savedScreen").hidden = true; sheetOpen = false; };
 
   // ---------- Tela inicial ----------
   function stopCamera() {
+    gravarPendente();
     cameraOn = false;
+    sheetOpen = false;
+    $("mktScreen").hidden = true;
     if (video.srcObject) { video.srcObject.getTracks().forEach((t) => t.stop()); video.srcObject = null; }
     try { if (wakeLock) wakeLock.release(); } catch (e) {}
     wakeLock = null;
@@ -1091,6 +1171,302 @@ body.card-on #confirm { visibility: hidden; }
     }
     return null;
   }
+
+  // ======================================================================
+  // BASE COLABORATIVA DE PREÇOS (Firebase Firestore, plano gratuito)
+  // Preencha os dois campos abaixo depois de criar o projeto no Firebase.
+  // Vazio = os preços ficam só neste celular, e o app continua funcionando.
+  // ======================================================================
+  const BASE = { projectId: "", apiKey: "" };
+  const baseOn = () => !!(BASE.projectId && BASE.apiKey);
+  const FS = () => "https://firestore.googleapis.com/v1/projects/" + BASE.projectId + "/databases/(default)/documents";
+  const APP_VER = "v12";
+
+  const norm = (s) => plain(s).replace(/[^a-z0-9]+/g, " ").trim();
+  function tamanhoN(s) {
+    const m = /(\d+(?:[.,]\d+)?)\s*(kg|quilos?|g|gr|gramas?|mg|l|lt|litros?|ml)\b/.exec(plain(s));
+    if (!m) return "";
+    const v = parseFloat(m[1].replace(",", ".")), u = m[2];
+    if (!(v > 0)) return "";
+    if (u === "kg" || u.startsWith("quilo")) return Math.round(v * 1000) + "g";
+    if (u === "mg") return (v / 1000) + "g";
+    if (u === "ml") return Math.round(v) + "ml";
+    if (u.startsWith("g")) return Math.round(v) + "g";
+    return Math.round(v * 1000) + "ml";
+  }
+  const UNITS = new Set(["kg", "gr", "gramas", "grama", "litro", "litros", "quilo", "quilos", "ml", "lt"]);
+  function tokens(s) { return norm(s).split(" ").filter((w) => w.length > 2 && !/^\d/.test(w) && !STOP.has(w) && !UNITS.has(w)); }
+
+  // Mesmo produto = mesmo tamanho, mesma marca e nomes bem parecidos.
+  function mesmoProduto(r, p) {
+    const t1 = tamanhoN(r.tamanho || r.produto), t2 = p.tamanho_n || tamanhoN(p.tamanho || p.produto);
+    if (!t1 || t1 !== t2) return false;
+    const m1 = norm(r.marca), m2 = p.marca_n || norm(p.marca);
+    if (m1 && m2 && m1 !== m2) return false;
+    const a = new Set(tokens(r.produto)), b = new Set(tokens(p.produto));
+    if (!a.size || !b.size) return false;
+    let inter = 0; a.forEach((w) => { if (b.has(w)) inter++; });
+    return inter / Math.min(a.size, b.size) >= 0.75;
+  }
+
+  // Preço mais recente de cada outro mercado nos últimos 30 dias (confirmados valem mais que leituras da IA).
+  function outrosMercados(r) {
+    const lim = Date.now() - 30 * 864e5;
+    const porMercado = new Map();
+    lerPrecos().concat(r._nuvem || []).forEach((p) => {
+      if (!p.mercado_id || (mercado && p.mercado_id === mercado.id)) return;
+      const t = Date.parse(p.data);
+      if (!(t > lim) || !(p.preco > 0) || !mesmoProduto(r, p)) return;
+      const peso = p.origem === "lido pela IA" ? 0 : 1;
+      const at = porMercado.get(p.mercado_id);
+      if (!at || peso > at.peso || (peso === at.peso && t > at.t)) porMercado.set(p.mercado_id, { loja: p.mercado_nome || "Mercado", val: p.preco, t, peso, fonte: "usuários" });
+    });
+    return [...porMercado.values()].sort((a, b) => a.val - b.val);
+  }
+
+  // ---------- Registro automático do preço local ----------
+  // Preço lido pela IA e não respondido: é gravado quando a pessoa passa para outro produto
+  // (só se a IA tinha certeza alta do produto). Confirmar ou corrigir grava na hora.
+  let pendente = null;
+  function marcarPendente(r) { if (r && r.preco_lido > 0 && !r.preco_confirmado && !r.preco_salvo) pendente = r; }
+  function gravarPendente() {
+    const r = pendente; pendente = null;
+    if (!r || r.preco_confirmado || r.preco_salvo || !(r.preco_lido > 0) || r.confianca !== "alta") return;
+    registrar(r, r.preco_lido, "lido pela IA");
+    r.preco_salvo = true;
+  }
+
+  function registrar(r, preco, origem) {
+    const reg = {
+      produto: String(r.produto || "").slice(0, 200), marca: r.marca || "", marca_n: norm(r.marca),
+      versao: r.versao || "", tamanho: r.tamanho || "", tamanho_n: tamanhoN(r.tamanho || r.produto),
+      preco: preco, origem: origem,
+      mercado_id: mercado ? mercado.id : null, mercado_nome: mercado ? mercado.nome : null,
+      lat: mercado ? mercado.lat : null, lon: mercado ? mercado.lon : null,
+      data: new Date().toISOString(), app: APP_VER
+    };
+    const ok = salvarPreco(reg);
+    if (!ok) return "Não consegui salvar neste celular.";
+    if (!reg.mercado_id) return "Preço salvo neste celular. Escolha o mercado para ele entrar na base.";
+    if (!baseOn()) return "Preço salvo neste celular (" + reg.mercado_nome + ").";
+    enviarNuvem(reg);
+    return "Preço salvo e enviado à base (" + reg.mercado_nome + ").";
+  }
+
+  // ---------- Envio e consulta na base (Firestore, via internet comum, sem biblioteca) ----------
+  function toFs(o) {
+    const f = {};
+    Object.keys(o).forEach((k) => {
+      const v = o[k];
+      if (v === null || v === undefined) f[k] = { nullValue: null };
+      else if (k === "data") f[k] = { timestampValue: v };
+      else if (typeof v === "number") f[k] = { doubleValue: v };
+      else f[k] = { stringValue: String(v) };
+    });
+    return { fields: f };
+  }
+  function fromFs(doc) {
+    const o = {}, f = (doc && doc.fields) || {};
+    Object.keys(f).forEach((k) => {
+      const v = f[k];
+      o[k] = "stringValue" in v ? v.stringValue : "doubleValue" in v ? Number(v.doubleValue)
+        : "integerValue" in v ? Number(v.integerValue) : "timestampValue" in v ? v.timestampValue : null;
+    });
+    return o;
+  }
+  const FILA_KEY = "prateleira-fila-v1";
+  function lerFila() { try { const a = JSON.parse(localStorage.getItem(FILA_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function gravarFila(a) { try { localStorage.setItem(FILA_KEY, JSON.stringify(a.slice(-300))); } catch (e) {} }
+  async function postNuvem(reg) {
+    const res = await fetch(FS() + "/precos?key=" + encodeURIComponent(BASE.apiKey), {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(toFs(reg))
+    });
+    return res.ok;
+  }
+  async function enviarNuvem(reg) {
+    let ok = false;
+    try { ok = await postNuvem(reg); } catch (e) {}
+    if (!ok) { const f = lerFila(); f.push(reg); gravarFila(f); }
+  }
+  async function esvaziarFila() {
+    if (!baseOn()) return;
+    const f = lerFila();
+    if (!f.length) return;
+    const resto = [];
+    for (const reg of f) { let ok = false; try { ok = await postNuvem(reg); } catch (e) {} if (!ok) resto.push(reg); }
+    gravarFila(resto);
+  }
+  const nuvemCache = new Map();
+  async function buscarNuvem(marcaN) {
+    const c = nuvemCache.get(marcaN);
+    if (c && Date.now() - c.t < 5 * 60e3) return c.lista;
+    const res = await fetch(FS() + ":runQuery?key=" + encodeURIComponent(BASE.apiKey), {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ structuredQuery: {
+        from: [{ collectionId: "precos" }],
+        where: { fieldFilter: { field: { fieldPath: "marca_n" }, op: "EQUAL", value: { stringValue: marcaN } } },
+        limit: 300
+      } })
+    });
+    if (!res.ok) throw new Error("base " + res.status);
+    const d = await res.json();
+    const lista = (Array.isArray(d) ? d : []).filter((x) => x.document).map((x) => fromFs(x.document));
+    nuvemCache.set(marcaN, { t: Date.now(), lista });
+    return lista;
+  }
+
+  // ---------- Busca de preços na internet (Gemini com pesquisa Google) ----------
+  // Pelo preço publicado pelo Google, a pesquisa só é gratuita nos modelos 2.5 Flash e 2.5 Flash-Lite
+  // (até 500 buscas por dia somando os dois). Cada produto é buscado no máximo a cada 12 horas.
+  const WEB_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+  const webBlocked = new Set();
+  const WEB_KEY = "prateleira-web-v1";
+  function webCacheGet(k) {
+    try { const c = JSON.parse(localStorage.getItem(WEB_KEY) || "{}")[k]; return c && Date.now() - c.t < 12 * 3600e3 ? c.v : null; } catch (e) { return null; }
+  }
+  function webCachePut(k, v) {
+    try {
+      const all = JSON.parse(localStorage.getItem(WEB_KEY) || "{}");
+      all[k] = { t: Date.now(), v };
+      const ks = Object.keys(all); if (ks.length > 150) ks.sort((a, b) => all[a].t - all[b].t).slice(0, ks.length - 150).forEach((x) => delete all[x]);
+      localStorage.setItem(WEB_KEY, JSON.stringify(all));
+    } catch (e) {}
+  }
+  async function buscarWeb(r) {
+    const k = norm(r.produto);
+    const c = webCacheGet(k);
+    if (c) return c;
+    await loadModels();
+    const tries = WEB_MODELS.filter((n) => (models || []).includes(n) && !webBlocked.has(n));
+    if (!tries.length) return { estado: "erro" };
+    const ask = [
+      'Pesquise na internet o preço atual do produto "' + r.produto + '" (marca: ' + (r.marca || "?") + ", tamanho: " + (r.tamanho || "?") + ") em supermercados e lojas online do Brasil.",
+      "Dê preferência a mercados de Santa Catarina (Florianópolis e região) e a lojas com venda online.",
+      "Considere só ofertas do MESMO produto e do MESMO tamanho, com preço em reais que apareça nos resultados da pesquisa. Não estime nem invente preços.",
+      'Responda só com JSON, sem texto fora dele: {"ofertas":[{"loja":"nome curto da loja","preco":12.99}]}',
+      "No máximo 4 ofertas, da mais barata para a mais cara. Se não achar nenhuma confiável, use lista vazia."
+    ].join("\n");
+    let limite = false;
+    for (const name of tries) {
+      const call = (think) => fetch(API + "/models/" + name + ":generateContent", {
+        method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": code },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: ask }] }],
+          tools: [{ google_search: {} }],
+          generationConfig: Object.assign({ temperature: 0.1, maxOutputTokens: 1200 }, think ? { thinkingConfig: { thinkingBudget: 0 } } : {})
+        })
+      });
+      let res = await call(true);
+      if (res.status === 400) res = await call(false);
+      if (res.status === 429) { limite = true; webBlocked.add(name); continue; }
+      if (!res.ok) { if (res.status === 404 || res.status === 400) webBlocked.add(name); continue; }
+      const d = await res.json();
+      const cand = (d.candidates || [])[0] || {};
+      const text = ((cand.content || {}).parts || []).filter((p) => !p.thought).map((p) => p.text || "").join("");
+      const j = parseJSON(text);
+      const ref = r.preco_etiqueta > 0 ? r.preco_etiqueta : r.preco_tipico > 0 ? r.preco_tipico : 0;
+      const ofertas = ((j && j.ofertas) || []).map((o) => ({ loja: String(o.loja || "").trim().slice(0, 40), preco: typeof o.preco === "string" ? parseFloat(o.preco.replace(",", ".")) : Number(o.preco) }))
+        .filter((o) => o.loja && o.preco > 0 && (!ref || (o.preco > ref / 3 && o.preco < ref * 3)))
+        .sort((a, b) => a.preco - b.preco).slice(0, 4);
+      const fontes = (((cand.groundingMetadata || {}).groundingChunks) || []).map((g) => g.web).filter((w) => w && w.uri)
+        .map((w) => ({ titulo: String(w.title || "fonte").slice(0, 40), url: w.uri })).slice(0, 4);
+      const v = { estado: "ok", ofertas, fontes };
+      webCachePut(k, v);
+      return v;
+    }
+    return { estado: limite ? "limite" : "erro" };
+  }
+
+  // Ao reconhecer um produto novo: busca preços da base e da internet em paralelo, sem travar a câmera.
+  function consultarPrecos(r) {
+    const okWeb = r.confianca !== "baixa" && !!tamanhoN(r.tamanho || r.produto);
+    r._web = okWeb ? { estado: "buscando" } : { estado: "pulado" };
+    if (okWeb) buscarWeb(r).catch(() => ({ estado: "erro" })).then((w) => { r._web = w; refresh(r); });
+    if (baseOn() && norm(r.marca)) buscarNuvem(norm(r.marca)).then((l) => { r._nuvem = l; refresh(r); }).catch(() => {});
+    refresh(r);
+  }
+
+  // ---------- Mercado onde a pessoa está (localização + mapa aberto OpenStreetMap) ----------
+  let mercado = null;            // { id, nome, lat, lon }
+  let perto = [];
+  let ultimaPos = null;
+  const MKT_KEY = "prateleira-mercado-v1";
+  try { const s = JSON.parse(localStorage.getItem(MKT_KEY) || "null"); if (s && s.m) mercado = s.m; } catch (e) {}
+
+  function mostrarMercado(txt) {
+    $("mktBtn").textContent = txt || (mercado ? "Mercado: " + mercado.nome : "Mercado: escolher");
+  }
+  function distM(a1, o1, a2, o2) {
+    const R = 6371000, toR = Math.PI / 180, dA = (a2 - a1) * toR, dO = (o2 - o1) * toR;
+    const h = Math.sin(dA / 2) ** 2 + Math.cos(a1 * toR) * Math.cos(a2 * toR) * Math.sin(dO / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+  const r4 = (v) => (typeof v === "number" ? Math.round(v * 1e4) / 1e4 : null);
+  function definirMercado(m) {
+    mercado = { id: m.id, nome: m.nome, lat: r4(m.lat), lon: r4(m.lon) };
+    try { localStorage.setItem(MKT_KEY, JSON.stringify({ t: Date.now(), m: mercado })); } catch (e) {}
+    mostrarMercado();
+    if (last) refresh(last);
+  }
+  async function mercadosPerto(lat, lon) {
+    const q = '[out:json][timeout:15];nwr["shop"~"^(supermarket|convenience|wholesale|greengrocer|butcher|department_store)$"](around:400,' + lat + "," + lon + ");out center tags 30;";
+    try {
+      const res = await fetch("https://overpass-api.de/api/interpreter", {
+        method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: "data=" + encodeURIComponent(q)
+      });
+      if (!res.ok) return [];
+      const d = await res.json();
+      return (d.elements || []).map((e) => {
+        const la = e.lat != null ? e.lat : e.center && e.center.lat, lo = e.lon != null ? e.lon : e.center && e.center.lon;
+        const t = e.tags || {};
+        const dm = distM(lat, lon, la, lo);
+        return { id: "osm:" + e.type + "/" + e.id, nome: t.name || t.brand || "", lat: la, lon: lo, dist: dm, score: dm * (t.shop === "supermarket" || t.shop === "wholesale" ? 1 : 2) };
+      }).filter((m) => m.nome && typeof m.lat === "number").sort((a, b) => a.score - b.score);
+    } catch (e) { return []; }
+  }
+  async function detectarMercado(force) {
+    let salvo = null;
+    try { salvo = JSON.parse(localStorage.getItem(MKT_KEY) || "null"); } catch (e) {}
+    if (!force && salvo && salvo.m && Date.now() - salvo.t < 2 * 3600e3) { mercado = salvo.m; mostrarMercado(); return; }
+    if (!navigator.geolocation) { mostrarMercado(); return; }
+    mostrarMercado("Localizando mercado…");
+    const pos = await new Promise((ok) => navigator.geolocation.getCurrentPosition(ok, () => ok(null), { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }));
+    if (!pos) { mostrarMercado(); if (force) toast("Não consegui a localização. Escolha o mercado pelo nome."); return; }
+    ultimaPos = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+    perto = await mercadosPerto(ultimaPos.lat, ultimaPos.lon);
+    if (perto.length && perto[0].dist < 250) definirMercado(perto[0]);
+    else { mostrarMercado(perto.length ? "Mercado: confirmar" : "Mercado: escolher"); if (force) toast(perto.length ? "Escolha o mercado na lista." : "Nenhum mercado encontrado aqui perto. Digite o nome."); }
+    if (!$("mktScreen").hidden) listarMercados();
+  }
+  function listarMercados() {
+    const ul = $("mktList");
+    ul.textContent = "";
+    perto.slice(0, 8).forEach((m) => {
+      const li = el("li");
+      const b = el("button");
+      b.type = "button";
+      b.setAttribute("aria-current", mercado && mercado.id === m.id ? "true" : "false");
+      b.append(el("span", "", m.nome), el("span", "km", m.dist < 1000 ? Math.round(m.dist) + " m" : (m.dist / 1000).toFixed(1).replace(".", ",") + " km"));
+      b.onclick = () => { definirMercado(m); fecharMercado(); };
+      li.append(b); ul.append(li);
+    });
+    $("mktInfo").textContent = perto.length ? "Mercados encontrados perto de você:" : "Toque em Localizar de novo ou digite o nome do mercado.";
+  }
+  function abrirMercado() { sheetOpen = true; listarMercados(); $("mktScreen").hidden = false; }
+  function fecharMercado() { $("mktScreen").hidden = true; sheetOpen = false; }
+  $("mktBtn").onclick = abrirMercado;
+  $("mktClose").onclick = fecharMercado;
+  $("mktLocate").onclick = () => { $("mktInfo").textContent = "Localizando…"; detectarMercado(true); };
+  $("mktForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const nome = $("mktInput").value.trim();
+    if (!nome) return;
+    const p = ultimaPos || {};
+    definirMercado({ id: "nome:" + norm(nome).replace(/ /g, "-") + (p.lat ? "@" + p.lat.toFixed(3) + "," + p.lon.toFixed(3) : ""), nome: nome.slice(0, 60), lat: p.lat, lon: p.lon });
+    $("mktInput").value = "";
+    fecharMercado();
+  });
+  mostrarMercado();
 
   // ---------- Código de acesso ----------
   function askCode(msg) {
