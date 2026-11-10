@@ -207,6 +207,7 @@ body.card-on #confirm { visibility: hidden; }
 #quoteBox tr.tot td { font: 700 17px var(--font-display); border-bottom: 0; }
 #quoteBox .verdict { background: #1d2a22; border: 1px solid var(--shelf); border-radius: 12px; padding: 10px 12px; font-size: 15px; line-height: 1.4; }
 #quoteBox .verdict strong { color: var(--tag); }
+#quoteBox .verdict.est { background: transparent; border-style: dashed; }
 #quoteBox .fine { font-size: 12px; color: var(--muted); line-height: 1.4; }
 .ghostlink { appearance: none; border: 0; background: transparent; color: var(--muted); text-decoration: underline; font: 14px var(--font-body); cursor: pointer; }
 /* ======================================================================
@@ -468,7 +469,7 @@ body.card-on #confirm { visibility: hidden; }
 <div class="top">
   <div class="lt">
     <button type="button" id="homeBtn" class="homeb" aria-label="Voltar ao início">‹ Início</button>
-    <span class="brand">Prateleira<span class="ver">v18</span></span>
+    <span class="brand">Prateleira<span class="ver">v19</span></span>
   </div>
   <div class="seg" role="group" aria-label="Modo da IA">
     <button type="button" id="mFast" aria-pressed="true">Rápido</button>
@@ -495,7 +496,7 @@ body.card-on #confirm { visibility: hidden; }
 
 <section class="screen" id="homeScreen" hidden>
   <header class="hd">
-    <div class="kick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Prateleira <span class="ver">v18</span></div>
+    <div class="kick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Prateleira <span class="ver">v19</span></div>
     <h1>Aponte. Compare. Economize.</h1>
   </header>
   <button type="button" class="hero" id="goShelf" aria-label="Consultar prateleira com a câmera">
@@ -1428,15 +1429,15 @@ body.card-on #confirm { visibility: hidden; }
     } else if (!baseOn()) {
       tag.append(el("span", "small", "Base colaborativa ainda não conectada: preços de usuários vêm só deste celular."));
     }
-    tag.append(el("div", "sec", "Na internet"));
     const l2 = el("div", "prices");
+    if (w.estado !== "desligada") tag.append(el("div", "sec", "Na internet"));
     if (of.web.length) of.web.forEach((p, i) => l2.append(linha(p, i, p.loja)));
     else l2.append(el("span", "small", w.estado === "buscando" ? "Buscando preços na internet…"
       : w.estado === "limite" ? "Limite gratuito de buscas atingido por hoje. Tente amanhã."
       : w.estado === "erro" ? "A busca na internet falhou: " + (w.detalhe || "motivo desconhecido") + "."
       : w.estado === "ok" ? "A busca não encontrou preços deste produto em lojas online."
       : "Busca na internet ainda não feita."));
-    tag.append(l2);
+    if (w.estado !== "desligada") tag.append(l2);
     if (r.preco_tipico > 0) {
       tag.append(el("div", "sec", "Estimativa da IA"), el("span", "small", "Preço típico no Brasil: ~" + fmt(r.preco_tipico) + " (estimativa, não é preço de loja)."));
     }
@@ -1450,7 +1451,8 @@ body.card-on #confirm { visibility: hidden; }
       });
       tag.append(fs);
     }
-    tag.append(el("span", "small", "Preços da internet vêm de busca automática e podem estar desatualizados."));
+    if (w.estado !== "desligada") tag.append(el("span", "small", "Preços da internet vêm de busca automática e podem estar desatualizados."));
+    else tag.append(el("span", "small", "Os preços dos mercados vêm de quem consulta a prateleira ou lê cupons fiscais."));
     const n = lerPrecos().length;
     if (n) {
       const b = el("button", "linkb", "Ver preços salvos (" + n + ")");
@@ -1911,7 +1913,7 @@ body.card-on #confirm { visibility: hidden; }
   const BASE = { projectId: "", apiKey: "" };
   const baseOn = () => !!(BASE.projectId && BASE.apiKey);
   const FS = () => "https://firestore.googleapis.com/v1/projects/" + BASE.projectId + "/databases/(default)/documents";
-  const APP_VER = "v18";
+  const APP_VER = "v19";
 
   const norm = (s) => plain(s).replace(/[^a-z0-9]+/g, " ").trim();
   function tamanhoN(s) {
@@ -2053,6 +2055,10 @@ body.card-on #confirm { visibility: hidden; }
   // ---------- Busca de preços na internet (Gemini com pesquisa Google) ----------
   // Pelo preço publicado pelo Google, a pesquisa só é gratuita nos modelos 2.5 Flash e 2.5 Flash-Lite
   // (até 500 buscas por dia somando os dois). Cada produto é buscado no máximo a cada 12 horas.
+  // Busca de preços na internet (pesquisa Google pelo Gemini) DESLIGADA: nos modelos atuais ela só
+  // funciona com faturamento ativado na chave do Google, e o app deve ficar sem custo.
+  // Para religar no futuro, basta trocar para true.
+  const BUSCA_INTERNET = false;
   const WEB_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
   // Traduz o erro do Google para algo que a pessoa entenda.
   function explicarFalhas(falhas) {
@@ -2147,6 +2153,12 @@ body.card-on #confirm { visibility: hidden; }
 
   // Ao reconhecer um produto novo: busca preços da base e da internet em paralelo, sem travar a câmera.
   function consultarPrecos(r) {
+    if (!BUSCA_INTERNET) {
+      r._web = { estado: "desligada" };
+      if (baseOn() && norm(r.marca)) buscarNuvem(norm(r.marca)).then((l) => { r._nuvem = l; refresh(r); }).catch(() => {});
+      refresh(r);
+      return;
+    }
     r._web = { estado: "buscando" };
     // espera até 6 s pelos mercados próximos, para já pesquisar o preço neles
     const espera = Promise.race([vizPromise || Promise.resolve(), new Promise((ok) => setTimeout(ok, 6000))]);
@@ -2371,7 +2383,7 @@ body.card-on #confirm { visibility: hidden; }
   }
   // Item sem marca ganha a marca mais vendida/conhecida; sem tamanho, a embalagem mais comum.
   // A mesma escolha vale para os dois mercados, para a comparação ser justa.
-  const PAD_KEY = "prateleira-padrao-v1";
+  const PAD_KEY = "prateleira-padrao-v2";
   async function padronizarItens(itens) {
     let cache = {};
     try { cache = JSON.parse(localStorage.getItem(PAD_KEY) || "{}"); } catch (e) {}
@@ -2386,10 +2398,11 @@ body.card-on #confirm { visibility: hidden; }
           "- se a pessoa não disse a marca, use a marca mais vendida ou mais conhecida no Brasil para esse tipo de produto;",
           "- se não disse o tamanho, use a embalagem mais comum (peso ou volume);",
           "- mantenha marca, tamanho e tipo quando a pessoa informou;",
-          "- qtd = quantas embalagens ela pediu (1 se não disse).",
+          "- qtd = quantas embalagens ela pediu (1 se não disse);",
+          "- preco_tipico = preço típico de uma embalagem desse produto em supermercados do Brasil hoje, em reais (estimativa).",
           "Itens:",
           falta.map((i, k) => (k + 1) + ". " + itens[i]).join("\n"),
-          'Responda só com JSON: {"itens":[{"n":1,"produto":"Arroz Tio João Tipo 1 5 kg","marca":"Tio João","tamanho":"5 kg","qtd":1,"marca_sugerida":true,"tamanho_sugerido":false}]}'
+          'Responda só com JSON: {"itens":[{"n":1,"produto":"Arroz Tio João Tipo 1 5 kg","marca":"Tio João","tamanho":"5 kg","qtd":1,"marca_sugerida":true,"tamanho_sugerido":false,"preco_tipico":27.9}]}'
         ].join("\n");
         for (const name of pickModels().slice(0, 3)) {
           const res = await fetch(API + "/models/" + name + ":generateContent", {
@@ -2404,7 +2417,8 @@ body.card-on #confirm { visibility: hidden; }
             const i = falta[Number(x.n) - 1];
             if (i === undefined || !x.produto) return;
             out[i] = { produto: String(x.produto).slice(0, 100), marca: String(x.marca || ""), tamanho: String(x.tamanho || ""),
-              qtd: Math.max(1, Math.min(50, Math.round(Number(x.qtd) || 1))), marca_sugerida: !!x.marca_sugerida, tamanho_sugerido: !!x.tamanho_sugerido };
+              qtd: Math.max(1, Math.min(50, Math.round(Number(x.qtd) || 1))), marca_sugerida: !!x.marca_sugerida, tamanho_sugerido: !!x.tamanho_sugerido,
+              preco_tipico: (() => { const v = typeof x.preco_tipico === "string" ? parseFloat(x.preco_tipico.replace(",", ".")) : Number(x.preco_tipico); return v > 0 && v < 5000 ? v : null; })() };
             cache[norm(itens[i])] = out[i];
           });
           break;
@@ -2413,6 +2427,12 @@ body.card-on #confirm { visibility: hidden; }
       } catch (e) {}
     }
     return out.map((p, i) => p || { produto: itens[i], qtd: 1 });
+  }
+
+  // Preço típico estimado pela IA (sem pesquisa Google, sem custo). Usa a mesma padronização da lista.
+  async function estimarPrecos(itens) {
+    const pad = await padronizarItens(itens);
+    return pad.map((p) => (p && p.preco_tipico > 0 ? { produto: p.produto, preco: p.preco_tipico } : null));
   }
 
   async function precosNaInternet(m, itens, regiao) {
@@ -2502,7 +2522,7 @@ body.card-on #confirm { visibility: hidden; }
       const colunas = await Promise.all(dois.map(async (m) => {
         const precos = busca.map((it) => precoDosUsuarios(it, m, registros));
         const faltam = busca.map((it, i) => (precos[i] ? null : i)).filter((i) => i !== null);
-        const web = await precosNaInternet(m, faltam.map((i) => busca[i]), regiao);
+        const web = BUSCA_INTERNET ? await precosNaInternet(m, faltam.map((i) => busca[i]), regiao) : {};
         faltam.forEach((i, k) => { if (web[k]) precos[i] = web[k]; });
         precos.forEach((p, i) => { if (p) p.qtd = pad[i].qtd || 1; });
         return { m, precos, erro: web.erro || "", detalhe: web.detalhe || "" };
@@ -2544,6 +2564,7 @@ body.card-on #confirm { visibility: hidden; }
         const sug = [pd.marca_sugerida ? "marca mais vendida" : "", pd.tamanho_sugerido ? "tamanho mais comum" : ""].filter(Boolean).join(", ");
         tdI.append(el("span", "pd", "→ " + (pd.qtd > 1 ? pd.qtd + "× " : "") + pd.produto + (sug ? " (" + sug + ")" : "")));
       }
+      if (pd && pd.preco_tipico > 0) tdI.append(el("span", "pd", "estimativa IA: ~" + fmt(pd.preco_tipico * (pd.qtd || 1))));
       tr.append(tdI);
       const vals = res.colunas.map((c) => custo(c.precos[i]));
       const minV = Math.min(...vals.filter((v) => v != null));
@@ -2581,6 +2602,14 @@ body.card-on #confirm { visibility: hidden; }
       v.textContent = "Só encontrei um supermercado por perto.";
     }
     box.append(v);
+    const ests = (res.pad || []).map((pd) => (pd && pd.preco_tipico > 0 ? pd.preco_tipico * (pd.qtd || 1) : null));
+    const nEst = ests.filter((x) => x != null).length;
+    if (nEst) {
+      const ve = el("div", "verdict est");
+      ve.append(document.createTextNode("Estimativa da IA para a lista" + (nEst < res.itens.length ? " (" + nEst + " de " + res.itens.length + " itens)" : "") + ": "),
+        el("strong", "", "~" + fmt(ests.reduce((a, x) => a + (x || 0), 0))), document.createTextNode(". É o preço típico no Brasil, não o preço destes mercados."));
+      box.append(ve);
+    }
     // relação dos mercados (total + rota) e mapa com o total de cada um; o mais barato em verde
     const melhorK = B && ambos > 0 && Math.abs(somaA - somaB) >= 0.01 ? (somaA < somaB ? 0 : 1) : -1;
     const pts = res.colunas.map((c, k) => ({
@@ -2608,7 +2637,7 @@ body.card-on #confirm { visibility: hidden; }
     res.colunas.filter((c) => c.erro && c.erro !== "limite").forEach((c) => {
       box.append(el("p", "fine", "A busca na internet falhou em " + c.nome + ": " + (c.detalhe || (c.erro === "sem modelo" ? "sua chave não tem os modelos Gemini 2.5, os únicos com pesquisa Google gratuita" : "motivo desconhecido")) + "."));
     });
-    box.append(el("p", "fine", "✓ = preço registrado por usuários no mercado (últimos 30 dias). * = preço achado na internet, pode estar desatualizado ou ser de outra unidade da rede. O total soma só os itens achados. Item sem marca ou tamanho foi pesquisado com a marca mais vendida e a embalagem mais comum (indicado abaixo do item)."));
+    box.append(el("p", "fine", (BUSCA_INTERNET ? "" : "Os preços dos mercados vêm de quem consulta a prateleira ou lê cupons fiscais; a busca na internet está desligada para o app ficar sem custo. ") + "✓ = preço registrado por usuários no mercado (últimos 30 dias). * = preço achado na internet, pode estar desatualizado ou ser de outra unidade da rede. O total soma só os itens achados. Item sem marca ou tamanho foi pesquisado com a marca mais vendida e a embalagem mais comum (indicado abaixo do item)."));
     box.hidden = false;
   }
   try { const q = JSON.parse(localStorage.getItem(QUOTE_KEY) || "null"); if (q && q.colunas) mostrarCotacao(q); } catch (e) {}
@@ -2700,6 +2729,17 @@ body.card-on #confirm { visibility: hidden; }
     res.push(...melhor.values());
     historicoBase = regs;
     if (ean) { desenhar(res.length ? "" : "Nenhum preço registrado para o código " + ean + " nos últimos 30 dias."); return; }
+    // 2) sem busca na internet: estimativa gratuita da IA (sem pesquisa Google), bem identificada
+    if (!BUSCA_INTERNET) {
+      desenhar(res.length ? "" : "Nenhum preço registrado para este produto ainda. Os preços entram quando alguém consulta a prateleira ou lê um cupom fiscal.");
+      if (!code) return;
+      const est = await estimarPrecos([q]);
+      if (id !== buscaId || !est[0]) return;
+      const c = el("div", "sumcard");
+      c.append(el("span", "fine", "Estimativa da IA (não é preço de loja)"), el("span", "big", "~" + fmt(est[0].preco)), el("span", "", est[0].produto + " · preço típico no Brasil"));
+      $("searchSum").append(c);
+      return;
+    }
     // 2) internet (precisa da chave da IA)
     if (!code) { desenhar(res.length ? "" : "Nenhum preço registrado. Para buscar na internet, cadastre a chave da IA."); return; }
     desenhar((res.length ? "" : "Nenhum preço registrado ainda. ") + "Buscando na internet e nos mercados perto de você…");
