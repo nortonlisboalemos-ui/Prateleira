@@ -386,6 +386,55 @@ body.card-on #confirm { visibility: hidden; }
 .tag .unit { font-size: 12px; font-weight: 400; opacity: 0.8; }
 .tag .media { font-size: 13px; font-weight: 600; }
 .go { font-size: 12px; font-weight: 600; margin-left: 4px; }
+/* v17: ficha com mapa (Leaflet + OpenStreetMap) */
+#sheetBg { position: fixed; inset: 0; background: rgba(10,16,12,0.45); z-index: 30; }
+#sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-height: 92vh; overflow-y: auto; color-scheme: light;
+  background: var(--surface); color: var(--tx); border-radius: 22px 22px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
+  padding: 8px max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 18px) max(16px, env(safe-area-inset-left, 0px));
+  animation: subir 0.25s ease;
+}
+@keyframes subir { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+#sheet .grab { width: 44px; height: 5px; border-radius: 3px; background: #d5dcd8; margin: 0 auto 6px; }
+#sheet .shx { position: absolute; right: 12px; top: 10px; appearance: none; border: 0; width: 34px; height: 34px; border-radius: 50%; background: #eef1ef; color: var(--tx2); font: 400 22px/1 var(--font-body); cursor: pointer; }
+#shBody { display: flex; flex-direction: column; gap: 10px; max-width: 560px; margin: 0 auto; }
+#shBody h2 { font: 700 22px var(--font-display); margin: 4px 44px 0 0; line-height: 1.15; }
+#shBody .lbl { font: 700 11px var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--tx2); margin-top: 4px; }
+#shBody .preco { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+#shBody .preco .big { font: 700 36px var(--font-display); font-variant-numeric: tabular-nums; }
+#shBody .preco .big.none { font: 400 18px var(--font-body); color: var(--tx2); }
+#shBody .fine { font-size: 12px; color: var(--tx2); line-height: 1.45; margin: 0; }
+.mapa { height: 200px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: #e9eeeb; }
+.mapa.alto { height: 56vh; }
+.mapa.off { display: grid; place-items: center; color: var(--tx2); font-size: 14px; padding: 12px; text-align: center; }
+.loja { display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: #fbfcfb; }
+.loja .t { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.loja b { font-size: 16px; }
+.loja small { font-size: 13px; color: var(--tx2); }
+.loja .star { appearance: none; border: 1px solid var(--line); background: var(--surface); color: #b9c2bd; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; flex: none; }
+.loja .star[aria-pressed="true"] { color: #e0a100; border-color: #f0d58a; background: #fff8e1; }
+#shBody .two .btn { flex: 1 1 0; width: auto; min-width: 0; padding: 11px 10px; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+#shBody .btn { width: 100%; appearance: none; border: 0; border-radius: 12px; padding: 14px; font: 600 16px var(--font-body); background: var(--pri); color: #fff; cursor: pointer; text-align: center; text-decoration: none; display: block; }
+#shBody .btn.ghost { background: var(--surface); color: var(--tx); border: 1px solid var(--line); }
+#shBody .btn.amar { background: var(--tag); color: var(--tag-ink); }
+.hist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.hist li { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; border-bottom: 1px solid var(--line); padding: 6px 0; }
+.hist li b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mapb { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; }
+.mapb svg { width: 18px; height: 18px; }
+/* pino de preço: etiqueta amarela com ponta, identidade do app */
+.pinp { background: none; border: 0; }
+.pinp .tg {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, calc(-100% - 7px)); white-space: nowrap; cursor: pointer;
+  background: var(--tag); color: var(--tag-ink); font: 700 14px var(--font-display); padding: 3px 8px; border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 2px solid #fff;
+}
+.pinp .tg::after { content: ""; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #fff; }
+.pinp .tg small { display: block; font: 600 10px var(--font-body); opacity: 0.8; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+.pinp.best .tg { background: var(--pri); color: #fff; }
+.pinp.none .tg { background: #fff; color: var(--tx2); border-color: #d5dcd8; }
+.pinp.aqui .tg { background: var(--night); color: var(--tag); }
+.leaflet-container { font-family: var(--font-body); }
 [hidden] { display: none !important; }
 @media (prefers-reduced-motion: reduce) { #reticle.busy { animation: none; } #card, #box { transition: none; } }
 </style>
@@ -399,7 +448,7 @@ body.card-on #confirm { visibility: hidden; }
 <div class="top">
   <div class="lt">
     <button type="button" id="homeBtn" class="homeb" aria-label="Voltar ao início">‹ Início</button>
-    <span class="brand">Prateleira<span class="ver">v16</span></span>
+    <span class="brand">Prateleira<span class="ver">v17</span></span>
   </div>
   <div class="seg" role="group" aria-label="Modo da IA">
     <button type="button" id="mFast" aria-pressed="true">Rápido</button>
@@ -426,7 +475,7 @@ body.card-on #confirm { visibility: hidden; }
 
 <section class="screen" id="homeScreen" hidden>
   <header class="hd">
-    <div class="kick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Prateleira <span class="ver">v16</span></div>
+    <div class="kick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Prateleira <span class="ver">v17</span></div>
     <h1>Aponte. Compare. Economize.</h1>
   </header>
   <button type="button" class="hero" id="goShelf" aria-label="Consultar prateleira com a câmera">
@@ -556,6 +605,13 @@ body.card-on #confirm { visibility: hidden; }
   <p class="muted" id="startMsg">Toque para abrir a câmera. Aponte para a prateleira e pare sobre um produto.</p>
   <button class="btn" type="button" id="startBtn">Abrir câmera</button>
   <button class="btn ghost" type="button" id="startHome">Início</button>
+</section>
+
+<div id="sheetBg" hidden></div>
+<section id="sheet" role="dialog" aria-modal="true" aria-label="Detalhes" hidden>
+  <div class="grab" aria-hidden="true"></div>
+  <button type="button" class="shx" id="shClose" aria-label="Fechar">×</button>
+  <div id="shBody"></div>
 </section>
 
 <nav id="tabbar" aria-label="Navegação" hidden>
@@ -1217,10 +1273,10 @@ body.card-on #confirm { visibility: hidden; }
     // Os dois mercados próximos aparecem sempre, com preço quando houver (usuários primeiro, depois internet).
     const prox = vizinhos.map((v) => {
       const u = outros.find((p) => p.id === v.id);
-      if (u) return { loja: v.nome, dist: v.dist, lat: v.lat, lon: v.lon, val: u.val, fonte: "usuários", t: u.t };
+      if (u) return { id: v.id, loja: v.nome, dist: v.dist, lat: v.lat, lon: v.lon, val: u.val, fonte: "usuários", t: u.t };
       const w = r._web && r._web.mercados && r._web.mercados[norm(v.nome)];
-      if (w > 0) return { loja: v.nome, dist: v.dist, lat: v.lat, lon: v.lon, val: w, fonte: "internet", web: true };
-      return { loja: v.nome, dist: v.dist, lat: v.lat, lon: v.lon, val: null };
+      if (w > 0) return { id: v.id, loja: v.nome, dist: v.dist, lat: v.lat, lon: v.lon, val: w, fonte: "internet", web: true };
+      return { id: v.id, loja: v.nome, dist: v.dist, lat: v.lat, lon: v.lon, val: null };
     });
     const idsProx = new Set(vizinhos.map((v) => v.id));
     const outrosSemProx = outros.filter((p) => !idsProx.has(p.id));
@@ -1311,6 +1367,18 @@ body.card-on #confirm { visibility: hidden; }
     const w = r._web || {};
     const km = (d) => (d < 1000 ? Math.round(d) + " m" : (d / 1000).toFixed(1).replace(".", ",") + " km");
     tag.append(el("div", "sec", "Mercados próximos"));
+    const noMapa = of.prox.concat(of.outros).filter((p) => p.lat != null && p.lon != null);
+    if (noMapa.length) {
+      const bm = el("button", "linkb", "Ver no mapa");
+      bm.type = "button";
+      bm.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const pts = noMapa.map((p) => Object.assign({ produto: r.produto, ean: r.ean || "", fonte: p.fonte || "", dist: p.dist != null ? p.dist : ultimaPos ? distM(ultimaPos.lat, ultimaPos.lon, p.lat, p.lon) : null }, p));
+        if (mercado && mercado.lat != null) pts.push({ produto: r.produto, ean: r.ean || "", loja: mercado.nome + " (aqui)", val: r.preco_etiqueta > 0 ? r.preco_etiqueta : null, lat: mercado.lat, lon: mercado.lon, id: mercado.id, fonte: "prateleira", aqui: true });
+        abrirMapaGeral(r.produto, pts);
+      });
+      tag.append(bm);
+    }
     const l0 = el("div", "prices");
     if (of.prox.length) of.prox.forEach((p, i) => {
       if (p.val != null) l0.append(linha(p, i, p.loja + " · " + km(p.dist) + " · " + (p.web ? "internet" : "usuários, " + haDias(p.t))));
@@ -1815,7 +1883,7 @@ body.card-on #confirm { visibility: hidden; }
   const BASE = { projectId: "", apiKey: "" };
   const baseOn = () => !!(BASE.projectId && BASE.apiKey);
   const FS = () => "https://firestore.googleapis.com/v1/projects/" + BASE.projectId + "/databases/(default)/documents";
-  const APP_VER = "v16";
+  const APP_VER = "v17";
 
   const norm = (s) => plain(s).replace(/[^a-z0-9]+/g, " ").trim();
   function tamanhoN(s) {
@@ -1855,7 +1923,7 @@ body.card-on #confirm { visibility: hidden; }
       if (!(t > lim) || !(p.preco > 0) || !mesmoProduto(r, p)) return;
       const peso = p.origem === "lido pela IA" ? 0 : 1;
       const at = porMercado.get(p.mercado_id);
-      if (!at || peso > at.peso || (peso === at.peso && t > at.t)) porMercado.set(p.mercado_id, { id: p.mercado_id, loja: p.mercado_nome || "Mercado", val: p.preco, t, peso, fonte: "usuários" });
+      if (!at || peso > at.peso || (peso === at.peso && t > at.t)) porMercado.set(p.mercado_id, { id: p.mercado_id, loja: p.mercado_nome || "Mercado", val: p.preco, t, peso, fonte: "usuários", lat: p.lat, lon: p.lon });
     });
     return [...porMercado.values()].sort((a, b) => a.val - b.val);
   }
@@ -2487,8 +2555,12 @@ body.card-on #confirm { visibility: hidden; }
   // 2º preços achados na internet, inclusive nos 2 mercados próximos.
   // ======================================================================
   let buscaId = 0;
-  function itemRes(x, best) {
+  function itemRes(x, best, lista) {
     const li = el("li", "res" + (best ? " best" : ""));
+    li.tabIndex = 0;
+    li.setAttribute("role", "button");
+    li.onclick = () => abrirDetalhe(x, lista);
+    li.onkeydown = (e) => { if (e.key === "Enter") abrirDetalhe(x, lista); };
     li.append(el("span", "nm", x.produto));
     const pr = el("span", "pr", fmt(x.val));
     const u = porUnidade(x.val, x.produto);
@@ -2517,7 +2589,7 @@ body.card-on #confirm { visibility: hidden; }
       ul.textContent = "";
       $("searchSum").textContent = "";
       res.sort((a, b) => a.val - b.val);
-      res.forEach((x, i) => ul.append(itemRes(x, i === 0 && res.length > 1)));
+      res.forEach((x, i) => ul.append(itemRes(x, i === 0 && res.length > 1, res)));
       if (res.length) {
         const m = res.reduce((a, b) => a + b.val, 0) / res.length;
         const c = el("div", "sumcard");
@@ -2525,6 +2597,14 @@ body.card-on #confirm { visibility: hidden; }
         if (res.length >= 2) {
           const d = Math.round((1 - res[0].val / m) * 100);
           if (d > 0) c.append(el("span", "pill", d + "% abaixo da média de " + res.length + " preços (" + fmt(m) + ")"));
+        }
+        const comLocal = res.filter((x) => x.lat != null && x.lon != null);
+        if (comLocal.length) {
+          const bm = el("button", "btn ghost mapb");
+          bm.type = "button";
+          bm.append(iconeMapa(), document.createTextNode("Ver no mapa (" + comLocal.length + (comLocal.length === 1 ? " local)" : " locais)")));
+          bm.onclick = () => abrirMapaGeral("Preços no mapa", res);
+          c.append(bm);
         }
         $("searchSum").append(c);
       }
@@ -2549,11 +2629,12 @@ body.card-on #confirm { visibility: hidden; }
       if (ean ? p.ean !== ean : !itemCombina(q, p)) return;
       const k = p.mercado_id + "|" + norm(p.produto);
       const at = melhor.get(k);
-      if (!at || t > at.t) melhor.set(k, { produto: p.produto, loja: p.mercado_nome || "Mercado", val: p.preco, t, lat: p.lat, lon: p.lon,
+      if (!at || t > at.t) melhor.set(k, { produto: p.produto, loja: p.mercado_nome || "Mercado", val: p.preco, t, lat: p.lat, lon: p.lon, id: p.mercado_id, ean: p.ean || "",
         dist: ultimaPos && p.lat != null ? distM(ultimaPos.lat, ultimaPos.lon, p.lat, p.lon) : null,
         fonte: /cupom/.test(p.origem || "") ? "cupom fiscal" : "registrado na prateleira" });
     });
     res.push(...melhor.values());
+    historicoBase = regs;
     if (ean) { desenhar(res.length ? "" : "Nenhum preço registrado para o código " + ean + " nos últimos 30 dias."); return; }
     // 2) internet (precisa da chave da IA)
     if (!code) { desenhar(res.length ? "" : "Nenhum preço registrado. Para buscar na internet, cadastre a chave da IA."); return; }
@@ -2565,7 +2646,7 @@ body.card-on #confirm { visibility: hidden; }
     if (id !== buscaId) return;
     vizinhos.forEach((v) => {
       const p = w && w.mercados && w.mercados[norm(v.nome)];
-      if (p > 0) res.push({ produto: q, loja: v.nome, val: p, dist: v.dist, lat: v.lat, lon: v.lon, fonte: "internet", web: true });
+      if (p > 0) res.push({ produto: q, loja: v.nome, val: p, dist: v.dist, lat: v.lat, lon: v.lon, id: v.id, fonte: "internet", web: true });
     });
     ((w && w.ofertas) || []).forEach((o) => res.push({ produto: q, loja: o.loja, val: o.preco, fonte: "internet", web: true }));
     const msg = !res.length
@@ -2816,6 +2897,192 @@ body.card-on #confirm { visibility: hidden; }
     btn.disabled = true;
     btn.textContent = n + (n === 1 ? " preço salvo" : " preços salvos");
     toast(n + (n === 1 ? " preço do cupom salvo" : " preços do cupom salvos") + (baseOn() ? " e enviados à base." : " neste celular."), 4000);
+  }
+
+  // ======================================================================
+  // MAPA E FICHA DO PREÇO (Leaflet + mapa aberto OpenStreetMap, carregados só quando usados)
+  // ======================================================================
+  const LF = {
+    js: "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js", jsSri: "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=",
+    css: "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css", cssSri: "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  };
+  let lfPromise = null, mapa = null, historicoBase = [];
+  function carregarMapa() {
+    if (window.L) return Promise.resolve(window.L);
+    if (lfPromise) return lfPromise;
+    lfPromise = new Promise((ok, fail) => {
+      const l = document.createElement("link");
+      l.rel = "stylesheet"; l.href = LF.css; l.integrity = LF.cssSri; l.crossOrigin = "anonymous";
+      document.head.append(l);
+      const sc = document.createElement("script");
+      sc.src = LF.js; sc.integrity = LF.jsSri; sc.crossOrigin = "anonymous";
+      sc.onload = () => ok(window.L);
+      sc.onerror = () => { lfPromise = null; fail(new Error("mapa")); };
+      document.head.append(sc);
+    });
+    return lfPromise;
+  }
+  function iconeMapa() {
+    const ns = "http://www.w3.org/2000/svg", sv = document.createElementNS(ns, "svg");
+    sv.setAttribute("viewBox", "0 0 24 24"); sv.setAttribute("fill", "none"); sv.setAttribute("stroke", "currentColor");
+    sv.setAttribute("stroke-width", "2"); sv.setAttribute("stroke-linecap", "round"); sv.setAttribute("stroke-linejoin", "round"); sv.setAttribute("aria-hidden", "true");
+    const pa = document.createElementNS(ns, "path");
+    pa.setAttribute("d", "M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14");
+    sv.append(pa);
+    return sv;
+  }
+  const kmTxt = (d) => (d == null ? "" : d < 1000 ? Math.round(d) + " m" : (d / 1000).toFixed(1).replace(".", ",") + " km");
+
+  // Desenha o mapa com um pino-etiqueta por loja (preço em amarelo; o menor, em verde) e a posição da pessoa.
+  async function desenharMapa(div, pontos, onPin) {
+    let L;
+    try { L = await carregarMapa(); }
+    catch (e) { div.classList.add("off"); div.textContent = "Não consegui carregar o mapa agora. Confira a internet."; return; }
+    if (!div.isConnected) return;
+    if (mapa) { mapa.remove(); mapa = null; }
+    mapa = L.map(div, { zoomControl: true, attributionControl: true });
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+    }).addTo(mapa);
+    const lim = [];
+    const comPreco = pontos.filter((p) => p.val > 0);
+    const menor = comPreco.length > 1 ? Math.min(...comPreco.map((p) => p.val)) : null;
+    pontos.forEach((p) => {
+      const tg = el("span", "tg", p.val > 0 ? fmt(p.val).replace("R$ ", "R$ ") : "sem preço");
+      tg.append(el("small", "", shortName(p.loja)));
+      const cls = "pinp" + (p.aqui ? " aqui" : !(p.val > 0) ? " none" : p.val === menor ? " best" : "");
+      const icon = L.divIcon({ className: cls, html: tg, iconSize: [0, 0], iconAnchor: [0, 0] });
+      const mk = L.marker([p.lat, p.lon], { icon, title: p.loja, keyboard: true, zIndexOffset: p.val === menor ? 500 : 0 }).addTo(mapa);
+      if (onPin) mk.on("click", () => onPin(p));
+      lim.push([p.lat, p.lon]);
+    });
+    if (ultimaPos) {
+      L.circleMarker([ultimaPos.lat, ultimaPos.lon], { radius: 7, color: "#ffffff", weight: 3, fillColor: "#1d6fe0", fillOpacity: 1 }).addTo(mapa).bindTooltip("Você");
+      lim.push([ultimaPos.lat, ultimaPos.lon]);
+    }
+    if (lim.length > 1) mapa.fitBounds(lim, { padding: [46, 46], maxZoom: 16 });
+    else if (lim.length) mapa.setView(lim[0], 15);
+    setTimeout(() => { if (mapa) mapa.invalidateSize(); }, 260);
+  }
+
+  function abrirSheet(rotulo) {
+    const b = $("shBody");
+    b.textContent = "";
+    $("sheet").setAttribute("aria-label", rotulo || "Detalhes");
+    $("sheet").hidden = false; $("sheetBg").hidden = false;
+    $("sheet").scrollTop = 0;
+    sheetOpen = true;
+    return b;
+  }
+  function fecharSheet() {
+    $("sheet").hidden = true; $("sheetBg").hidden = true;
+    if (mapa) { mapa.remove(); mapa = null; }
+    sheetOpen = !$("mktScreen").hidden || !$("savedScreen").hidden;
+  }
+  $("shClose").onclick = fecharSheet;
+  $("sheetBg").onclick = fecharSheet;
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("sheet").hidden) fecharSheet(); });
+
+  // Mapa com todos os preços (pesquisa ou câmera). Tocar num pino abre a ficha daquela loja.
+  function abrirMapaGeral(titulo, lista) {
+    const porLoja = new Map();
+    lista.filter((x) => x.lat != null && x.lon != null).forEach((x) => {
+      const k = x.id || (x.lat + "," + x.lon);
+      const at = porLoja.get(k);
+      if (!at || (x.val > 0 && (!(at.val > 0) || x.val < at.val))) porLoja.set(k, x);
+    });
+    const pts = [...porLoja.values()];
+    const b = abrirSheet("Preços no mapa");
+    b.append(el("h2", "", titulo), el("p", "fine", "Toque numa etiqueta para ver os detalhes da loja. O menor preço aparece em verde."));
+    const div = el("div", "mapa alto");
+    b.append(div);
+    const leg = el("p", "fine", pts.length + (pts.length === 1 ? " local com endereço no mapa." : " locais com endereço no mapa.") + " Preços da internet sem loja física não aparecem aqui.");
+    b.append(leg);
+    desenharMapa(div, pts, (p) => abrirDetalhe(p, lista));
+  }
+
+  // Ficha do preço: valor, comparação com a média, mapa da loja, favorito, histórico, lista e rota.
+  function abrirDetalhe(x, lista) {
+    const b = abrirSheet(x.produto);
+    b.append(el("h2", "", x.produto));
+    const pr = el("div", "preco");
+    pr.append(el("span", "big" + (x.val > 0 ? "" : " none"), x.val > 0 ? fmt(x.val) : "sem preço registrado"));
+    const vals = (lista || []).map((y) => y.val).filter((v) => v > 0);
+    if (x.val > 0 && vals.length >= 2) {
+      const m = vals.reduce((a, c) => a + c, 0) / vals.length;
+      const d = Math.round((x.val / m - 1) * 100);
+      pr.append(el("span", "pill" + (d > 0 ? " warn" : ""), d < 0 ? (-d) + "% abaixo da média" : d > 0 ? d + "% acima da média" : "na média"));
+    }
+    b.append(pr);
+    const extra = [porUnidade(x.val, x.produto), x.ean ? "código " + x.ean : "", x.fonte, x.t ? haDias(x.t) : ""].filter(Boolean).join(" · ");
+    if (extra) b.append(el("p", "fine", extra));
+
+    b.append(el("span", "lbl", "Localização"));
+    if (x.lat != null && x.lon != null) {
+      const div = el("div", "mapa");
+      b.append(div);
+      desenharMapa(div, [x]);
+    } else {
+      b.append(el("div", "mapa off", x.web ? "Preço encontrado na internet, sem loja física identificada." : "Esta loja ainda não tem localização no mapa."));
+    }
+
+    b.append(el("span", "lbl", "Estabelecimento"));
+    const lj = el("div", "loja");
+    const t = el("div", "t");
+    const dist = x.dist != null ? x.dist : ultimaPos && x.lat != null ? distM(ultimaPos.lat, ultimaPos.lon, x.lat, x.lon) : null;
+    t.append(el("b", "", x.loja || "Loja"), el("small", "", [dist != null ? kmTxt(dist) + " de distância" : "", x.web ? "preço da internet" : ""].filter(Boolean).join(" · ") || " "));
+    lj.append(t);
+    if (x.id) {
+      const fav = lerFavoritos();
+      const st = el("button", "star", "★");
+      st.type = "button";
+      const marcar = (on) => { st.setAttribute("aria-pressed", on ? "true" : "false"); st.setAttribute("aria-label", on ? "Tirar dos favoritos" : "Marcar como favorito"); };
+      marcar(!!fav[x.id]);
+      st.onclick = () => { alternarFavorito({ id: x.id, nome: x.loja, lat: x.lat, lon: x.lon }); marcar(!!lerFavoritos()[x.id]); };
+      lj.append(st);
+    }
+    b.append(lj);
+
+    const dois = el("div", "two");
+    const bs = el("button", "btn ghost", "Compartilhar"); bs.type = "button";
+    bs.onclick = async () => {
+      const txt = x.produto + ": " + (x.val > 0 ? fmt(x.val) : "sem preço") + " em " + (x.loja || "loja") + " (Prateleira)";
+      try { if (navigator.share) { await navigator.share({ title: "Prateleira", text: txt }); return; } } catch (e) { return; }
+      try { await navigator.clipboard.writeText(txt); toast("Texto copiado para compartilhar."); } catch (e) { toast(txt, 6000); }
+    };
+    const bh = el("button", "btn ghost", "Ver histórico"); bh.type = "button";
+    dois.append(bs, bh);
+    b.append(dois);
+    const hist = el("div", "block"); hist.hidden = true;
+    bh.onclick = () => {
+      hist.hidden = !hist.hidden;
+      if (hist.hidden) return;
+      hist.textContent = "";
+      const regs = lerPrecos().concat(historicoBase || []);
+      const vistos = new Set();
+      const itens = regs.filter((p) => p.preco > 0 && (x.ean && p.ean ? p.ean === x.ean : itemCombina(x.produto, p) || norm(p.produto) === norm(x.produto)))
+        .filter((p) => { const k = p.mercado_id + "|" + p.data + "|" + p.preco; if (vistos.has(k)) return false; vistos.add(k); return true; })
+        .sort((a, c) => Date.parse(c.data) - Date.parse(a.data)).slice(0, 20);
+      if (!itens.length) { hist.append(el("p", "fine", "Ainda não há registros anteriores deste produto.")); return; }
+      const ul = el("ul", "hist");
+      itens.forEach((p) => {
+        const li = el("li");
+        let q = ""; try { q = new Date(p.data).toLocaleDateString("pt-BR"); } catch (e) {}
+        li.append(el("span", "", q + " · " + (p.mercado_nome || "mercado") + (/cupom/.test(p.origem || "") ? " (cupom)" : "")), el("b", "", fmt(Number(p.preco))));
+        ul.append(li);
+      });
+      hist.append(ul);
+    };
+    b.append(hist);
+
+    const add = el("button", "btn", "Adicionar à lista de compras"); add.type = "button";
+    add.onclick = () => { const n = addItems([x.produto]); toast(n ? "Adicionado à lista de compras." : "Este item já está na lista."); };
+    b.append(add);
+    if (x.lat != null && x.lon != null) {
+      const rota = el("a", "btn amar", "Traçar rota até a loja");
+      rota.href = rotaUrl(x.lat, x.lon); rota.target = "_blank"; rota.rel = "noopener";
+      b.append(rota);
+    }
   }
 
   // ---------- Código de acesso ----------
