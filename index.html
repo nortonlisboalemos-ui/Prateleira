@@ -186,6 +186,9 @@ body.card-on #confirm { visibility: hidden; }
 .tag .sec { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
 .tag a { color: inherit; }
 #tagf .row.web .st { font-style: italic; }
+#tagf .row.none .pr { font-family: var(--font-body); font-weight: 400; font-size: 13px; opacity: 0.6; }
+#tagf .row.est .st, #tagf .row.est .pr { font-style: italic; opacity: 0.75; }
+.price .val.none { font-family: var(--font-body); font-weight: 400; font-size: 14px; opacity: 0.65; }
 .price .val { white-space: nowrap; }
 .price .src { min-width: 0; overflow-wrap: anywhere; }
 #quoteBtn { background: var(--shelf); color: #fff; }
@@ -198,6 +201,7 @@ body.card-on #confirm { visibility: hidden; }
 #quoteBox th:first-child, #quoteBox td:first-child { text-align: left; }
 #quoteBox td.v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 #quoteBox td.v .pn { display: block; white-space: normal; font-size: 11px; color: var(--muted); max-width: 120px; margin-left: auto; }
+#quoteBox td .pd { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
 #quoteBox td.best { color: var(--tag); font-weight: 700; }
 #quoteBox td.none { color: #5f7067; }
 #quoteBox tr.tot td { font: 700 17px var(--font-display); border-bottom: 0; }
@@ -218,7 +222,7 @@ body.card-on #confirm { visibility: hidden; }
 <div class="top">
   <div class="lt">
     <button type="button" id="homeBtn" class="homeb" aria-label="Voltar ao início">‹ Início</button>
-    <span class="brand">Prateleira<span class="ver">v13</span></span>
+    <span class="brand">Prateleira<span class="ver">v14</span></span>
   </div>
   <div class="seg" role="group" aria-label="Modo da IA">
     <button type="button" id="mFast" aria-pressed="true">Rápido</button>
@@ -380,7 +384,8 @@ body.card-on #confirm { visibility: hidden; }
       ["startScreen", "homeScreen", "listScreen", "savedScreen"].forEach((id) => { $(id).hidden = true; });
       try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
       cameraOn = true; needMove = false; stillSince = 0; prevFrame = null;
-      detectarMercado(false);
+      vizEstado = "buscando";
+      detectarMercado(false).finally(() => carregarVizinhos(false));
       esvaziarFila();
       if (!loopStarted) { loopStarted = true; requestAnimationFrame(loop); }
       if (soundOn && !audioReady) $("tapStart").hidden = false;
@@ -733,11 +738,21 @@ body.card-on #confirm { visibility: hidden; }
   function ofertas(r) {
     const outros = outrosMercados(r).map((p) => Object.assign({ web: false }, p));
     const web = (r._web && r._web.ofertas || []).map((p) => ({ val: p.preco, loja: p.loja, fonte: "internet", web: true }));
-    return { outros, web, todas: outros.concat(web).sort((a, b) => a.val - b.val) };
+    // Os dois mercados próximos aparecem sempre, com preço quando houver (usuários primeiro, depois internet).
+    const prox = vizinhos.map((v) => {
+      const u = outros.find((p) => p.id === v.id);
+      if (u) return { loja: v.nome, dist: v.dist, val: u.val, fonte: "usuários", t: u.t };
+      const w = r._web && r._web.mercados && r._web.mercados[norm(v.nome)];
+      if (w > 0) return { loja: v.nome, dist: v.dist, val: w, fonte: "internet", web: true };
+      return { loja: v.nome, dist: v.dist, val: null };
+    });
+    const idsProx = new Set(vizinhos.map((v) => v.id));
+    const outrosSemProx = outros.filter((p) => !idsProx.has(p.id));
+    return { outros: outrosSemProx, web, prox, todas: outrosSemProx.concat(web).sort((a, b) => a.val - b.val) };
   }
   function shortName(n) {
     const s = String(n || "").replace(/^(super|hiper)?\s*mercados?\s+|^atacad(o|ista)\s+|^supermercados?\s+/i, "")
-      .replace(/\s+(online|delivery|app|site|e-?commerce)$/i, "").trim() || String(n || "");
+      .replace(/\s+(online|delivery|app|site|e-?commerce)$/i, "").replace(/\s+(super|hiper)?mercados?$/i, "").trim() || String(n || "");
     return s.length > 14 ? s.slice(0, 13) + "…" : s;
   }
   function haDias(t) {
@@ -774,21 +789,42 @@ body.card-on #confirm { visibility: hidden; }
       row.append(el("span", "rank", (i + 1) + "º"), mid, el("span", "src", src));
       return row;
     };
-    tag.append(el("div", "sec", "Outros mercados (registrados pelos usuários)"));
-    const l1 = el("div", "prices");
-    of.outros.slice(0, 5).forEach((p, i) => l1.append(linha(p, i, p.loja + " · " + haDias(p.t))));
-    if (!of.outros.length) l1.append(el("span", "small", baseOn()
-      ? "Ainda ninguém registrou este produto em outro mercado."
-      : "Base colaborativa ainda não conectada: aparecem só preços salvos neste celular."));
-    tag.append(l1, el("div", "sec", "Na internet"));
-    const l2 = el("div", "prices");
     const w = r._web || {};
+    const km = (d) => (d < 1000 ? Math.round(d) + " m" : (d / 1000).toFixed(1).replace(".", ",") + " km");
+    tag.append(el("div", "sec", "Mercados próximos"));
+    const l0 = el("div", "prices");
+    if (of.prox.length) of.prox.forEach((p, i) => {
+      if (p.val != null) l0.append(linha(p, i, p.loja + " · " + km(p.dist) + " · " + (p.web ? "internet" : "usuários, " + haDias(p.t))));
+      else {
+        const row = el("div", "price");
+        row.append(el("span", "rank", (i + 1) + "º"), el("span", "val none", w.estado === "buscando" ? "buscando…" : "sem preço ainda"), el("span", "src", p.loja + " · " + km(p.dist)));
+        l0.append(row);
+      }
+    });
+    else l0.append(el("span", "small", vizEstado === "buscando" ? "Procurando supermercados perto de você…"
+      : vizEstado === "sem-local" ? "Sem a sua localização não consigo achar os mercados próximos. Permita a localização para este site."
+      : "Nenhum supermercado encontrado no mapa perto de você."));
+    tag.append(l0);
+    if (of.outros.length) {
+      tag.append(el("div", "sec", "Outros mercados (registrados pelos usuários)"));
+      const l1 = el("div", "prices");
+      of.outros.slice(0, 5).forEach((p, i) => l1.append(linha(p, i, p.loja + " · " + haDias(p.t))));
+      tag.append(l1);
+    } else if (!baseOn()) {
+      tag.append(el("span", "small", "Base colaborativa ainda não conectada: preços de usuários vêm só deste celular."));
+    }
+    tag.append(el("div", "sec", "Na internet"));
+    const l2 = el("div", "prices");
     if (of.web.length) of.web.forEach((p, i) => l2.append(linha(p, i, p.loja)));
     else l2.append(el("span", "small", w.estado === "buscando" ? "Buscando preços na internet…"
-      : w.estado === "limite" ? "Limite gratuito de buscas atingido por hoje."
-      : w.estado === "pulado" ? "Busca na internet só com o produto e o tamanho bem identificados."
-      : w.estado ? "Nenhum preço confiável encontrado na internet." : "Busca na internet ainda não feita."));
+      : w.estado === "limite" ? "Limite gratuito de buscas atingido por hoje. Tente amanhã."
+      : w.estado === "erro" ? "A busca na internet falhou: " + (w.detalhe || "motivo desconhecido") + "."
+      : w.estado === "ok" ? "A busca não encontrou preços deste produto em lojas online."
+      : "Busca na internet ainda não feita."));
     tag.append(l2);
+    if (r.preco_tipico > 0) {
+      tag.append(el("div", "sec", "Estimativa da IA"), el("span", "small", "Preço típico no Brasil: ~" + fmt(r.preco_tipico) + " (estimativa, não é preço de loja)."));
+    }
     if (w.fontes && w.fontes.length) {
       const fs = el("span", "small", "Fontes: ");
       w.fontes.slice(0, 4).forEach((f, i) => {
@@ -819,16 +855,28 @@ body.card-on #confirm { visibility: hidden; }
   function showTag(r, keep) {
     if (keep && tagf.hidden) return;
     const conf = ["alta", "media", "baixa"].includes(r.confianca) ? r.confianca : "baixa";
-    const top2 = ofertas(r).todas.slice(0, 2);
+    const of = ofertas(r);
+    // Linhas: os 2 mercados próximos (sempre, mesmo sem preço) + a oferta mais barata da internet.
+    let linhas = of.prox.slice(0, 2);
+    if (!linhas.length) linhas = of.todas.slice(0, 2);
+    const webExtra = of.web.find((p) => !linhas.some((x) => norm(x.loja) === norm(p.loja)));
+    if (webExtra) linhas = linhas.concat([webExtra]);
+    const top2 = linhas.filter((p) => p.val != null);
+    const buscando = r._web && r._web.estado === "buscando";
     tagf.textContent = "";
     if (conf !== "alta") tagf.append(el("span", "warn", "confirme"));
     tagf.append(el("span", "nm", r.produto));
-    top2.forEach((p) => {
-      const row = el("span", "row" + (p.web ? " web" : ""));
-      row.append(el("span", "st", shortName(p.loja) + (p.web ? "*" : "")), el("span", "pr", fmt(p.val)));
+    linhas.forEach((p) => {
+      const row = el("span", "row" + (p.web ? " web" : "") + (p.val == null ? " none" : ""));
+      row.append(el("span", "st", shortName(p.loja) + (p.web ? "*" : "")), el("span", "pr", p.val != null ? fmt(p.val) : buscando ? "…" : "sem preço"));
       tagf.append(row);
     });
-    if (!top2.length) tagf.append(el("span", "sub", r._web && r._web.estado === "buscando" ? "Buscando preços…" : "Sem preços de outros mercados ainda"));
+    if (!top2.length && r.preco_tipico > 0 && !buscando) {
+      const row = el("span", "row est");
+      row.append(el("span", "st", "Est. IA"), el("span", "pr", "~" + fmt(r.preco_tipico)));
+      tagf.append(row);
+    }
+    if (!linhas.length && !(r.preco_tipico > 0)) tagf.append(el("span", "sub", buscando ? "Buscando preços…" : "Sem preços de outros mercados ainda"));
     const here = el("span", "row here");
     if (r.preco_etiqueta > 0) {
       here.append(el("span", "st", r.preco_confirmado ? "Aqui ✓" : "Aqui"), el("span", "pr", fmt(r.preco_etiqueta)));
@@ -837,7 +885,7 @@ body.card-on #confirm { visibility: hidden; }
     }
     tagf.append(here);
     tagf.append(el("span", "demo", (top2.some((p) => p.web) ? "* internet · " : "") + "toque para mais"));
-    tagf.setAttribute("aria-label", r.produto + ": " + (top2.length ? top2.map((p) => p.loja + " " + fmt(p.val)).join(", ") : "sem preços de outros mercados") + ". Toque para ver mais.");
+    tagf.setAttribute("aria-label", r.produto + ": " + (linhas.length ? linhas.map((p) => p.loja + " " + (p.val != null ? fmt(p.val) : "sem preço")).join(", ") : "sem preços de outros mercados") + ". Toque para ver mais.");
     if (keep) { placeTag(); return; }
     clearTimeout(holdTimer); holdTimer = null;
     tagf.hidden = false;
@@ -1199,7 +1247,7 @@ body.card-on #confirm { visibility: hidden; }
   const BASE = { projectId: "", apiKey: "" };
   const baseOn = () => !!(BASE.projectId && BASE.apiKey);
   const FS = () => "https://firestore.googleapis.com/v1/projects/" + BASE.projectId + "/databases/(default)/documents";
-  const APP_VER = "v13";
+  const APP_VER = "v14";
 
   const norm = (s) => plain(s).replace(/[^a-z0-9]+/g, " ").trim();
   function tamanhoN(s) {
@@ -1238,7 +1286,7 @@ body.card-on #confirm { visibility: hidden; }
       if (!(t > lim) || !(p.preco > 0) || !mesmoProduto(r, p)) return;
       const peso = p.origem === "lido pela IA" ? 0 : 1;
       const at = porMercado.get(p.mercado_id);
-      if (!at || peso > at.peso || (peso === at.peso && t > at.t)) porMercado.set(p.mercado_id, { loja: p.mercado_nome || "Mercado", val: p.preco, t, peso, fonte: "usuários" });
+      if (!at || peso > at.peso || (peso === at.peso && t > at.t)) porMercado.set(p.mercado_id, { id: p.mercado_id, loja: p.mercado_nome || "Mercado", val: p.preco, t, peso, fonte: "usuários" });
     });
     return [...porMercado.values()].sort((a, b) => a.val - b.val);
   }
@@ -1341,9 +1389,15 @@ body.card-on #confirm { visibility: hidden; }
   // (até 500 buscas por dia somando os dois). Cada produto é buscado no máximo a cada 12 horas.
   const WEB_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
   const webBlocked = new Set();
-  const WEB_KEY = "prateleira-web-v1";
+  const WEB_KEY = "prateleira-web-v2";
+  try { localStorage.removeItem("prateleira-web-v1"); } catch (e) {}
   function webCacheGet(k) {
-    try { const c = JSON.parse(localStorage.getItem(WEB_KEY) || "{}")[k]; return c && Date.now() - c.t < 12 * 3600e3 ? c.v : null; } catch (e) { return null; }
+    try {
+      const c = JSON.parse(localStorage.getItem(WEB_KEY) || "{}")[k];
+      if (!c) return null;
+      const vazio = !(c.v.ofertas || []).length && !Object.keys(c.v.mercados || {}).length;
+      return Date.now() - c.t < (vazio ? 3600e3 : 12 * 3600e3) ? c.v : null;   // resultado vazio vale só 1 hora
+    } catch (e) { return null; }
   }
   function webCachePut(k, v) {
     try {
@@ -1354,57 +1408,113 @@ body.card-on #confirm { visibility: hidden; }
     } catch (e) {}
   }
   async function buscarWeb(r) {
-    const k = norm(r.produto);
+    const viz = vizinhos.slice(0, 2);
+    const k = norm(r.produto) + "|" + viz.map((v) => norm(v.nome)).join("|");
     const c = webCacheGet(k);
     if (c) return c;
-    await loadModels();
+    try { await loadModels(); } catch (e) { return { estado: "erro", detalhe: "não consegui consultar os modelos da sua chave" }; }
     const tries = WEB_MODELS.filter((n) => (models || []).includes(n) && !webBlocked.has(n));
-    if (!tries.length) return { estado: "erro" };
+    if (!tries.length) {
+      const tem = WEB_MODELS.filter((n) => (models || []).includes(n));
+      return { estado: tem.length ? "limite" : "erro", detalhe: tem.length ? "" : "sua chave não tem os modelos Gemini 2.5, os únicos com pesquisa Google gratuita" };
+    }
+    const regiao = vizRegiao || viz.map((v) => [v.bairro, v.cidade].filter(Boolean).join(", ")).find(Boolean) || "Santa Catarina";
     const ask = [
-      'Pesquise na internet o preço atual do produto "' + r.produto + '" (marca: ' + (r.marca || "?") + ", tamanho: " + (r.tamanho || "?") + ") em supermercados e lojas online do Brasil.",
-      "Dê preferência a mercados de Santa Catarina (Florianópolis e região) e a lojas com venda online.",
-      "Considere só ofertas do MESMO produto e do MESMO tamanho, com preço em reais que apareça nos resultados da pesquisa. Não estime nem invente preços.",
-      'Responda só com JSON, sem texto fora dele: {"ofertas":[{"loja":"nome curto da loja","preco":12.99}]}',
-      "No máximo 4 ofertas, da mais barata para a mais cara. Se não achar nenhuma confiável, use lista vazia."
-    ].join("\n");
+      'Pesquise na internet o preço atual, em reais, do produto "' + r.produto + '" (marca: ' + (r.marca || "não informada") + ", tamanho: " + (r.tamanho || "não informado") + ").",
+      viz.length ? "1) Procure o preço nestes supermercados perto da pessoa (" + regiao + "), no site, aplicativo, encarte ou ofertas da rede: " + viz.map((v, i) => (i + 1) + ". " + v.nome).join("; ") + "." : "",
+      "2) Liste também até 4 ofertas do mesmo produto em outros supermercados ou lojas online do Brasil (de preferência Santa Catarina).",
+      "Use preços que aparecem nas páginas ou nos resultados da pesquisa; não invente. Se o tamanho não foi informado, use a embalagem mais comum.",
+      'Responda só com JSON, sem texto fora dele: {"mercados":[{"n":1,"preco":12.99}],"ofertas":[{"loja":"nome curto da loja","preco":12.99}]}',
+      "Em mercados, use preco null quando não achar o preço naquele mercado. Em ofertas, lista vazia se não achar nada."
+    ].filter(Boolean).join("\n");
     let limite = false;
+    const falhas = [];
     for (const name of tries) {
       const call = (think) => fetch(API + "/models/" + name + ":generateContent", {
         method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": code },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: ask }] }],
           tools: [{ google_search: {} }],
-          generationConfig: Object.assign({ temperature: 0.1, maxOutputTokens: 1200 }, think ? { thinkingConfig: { thinkingBudget: 0 } } : {})
+          generationConfig: Object.assign({ temperature: 0.1, maxOutputTokens: 2500 }, think ? { thinkingConfig: { thinkingBudget: 0 } } : {})
         })
       });
-      let res = await call(true);
-      if (res.status === 400) res = await call(false);
+      let res;
+      try { res = await call(true); if (res.status === 400) res = await call(false); }
+      catch (e) { falhas.push(name + ": sem conexão"); continue; }
       if (res.status === 429) { limite = true; webBlocked.add(name); continue; }
-      if (!res.ok) { if (res.status === 404 || res.status === 400) webBlocked.add(name); continue; }
+      if (!res.ok) {
+        let msg = "";
+        try { msg = ((await res.json()).error || {}).message || ""; } catch (e) {}
+        falhas.push(name + ": erro " + res.status + (msg ? " (" + msg.slice(0, 120) + ")" : ""));
+        if (res.status === 404 || res.status === 400 || res.status === 403) webBlocked.add(name);
+        continue;
+      }
       const d = await res.json();
       const cand = (d.candidates || [])[0] || {};
       const text = ((cand.content || {}).parts || []).filter((p) => !p.thought).map((p) => p.text || "").join("");
       const j = parseJSON(text);
+      if (!j) { falhas.push(name + ": resposta sem dados" + (cand.finishReason ? " (" + cand.finishReason + ")" : "")); continue; }
       const ref = r.preco_etiqueta > 0 ? r.preco_etiqueta : r.preco_tipico > 0 ? r.preco_tipico : 0;
-      const ofertas = ((j && j.ofertas) || []).map((o) => ({ loja: String(o.loja || "").trim().slice(0, 40), preco: typeof o.preco === "string" ? parseFloat(o.preco.replace(",", ".")) : Number(o.preco) }))
-        .filter((o) => o.loja && o.preco > 0 && (!ref || (o.preco > ref / 3 && o.preco < ref * 3)))
+      const num = (x) => (typeof x === "string" ? parseFloat(x.replace(/[^\d,.]/g, "").replace(",", ".")) : Number(x));
+      const plausivel = (p) => p > 0 && (!ref || (p > ref / 3 && p < ref * 3));
+      const ofertas = (j.ofertas || []).map((o) => ({ loja: String(o.loja || "").trim().slice(0, 40), preco: num(o.preco) }))
+        .filter((o) => o.loja && plausivel(o.preco))
         .sort((a, b) => a.preco - b.preco).slice(0, 4);
+      const mercados = {};
+      (j.mercados || []).forEach((m) => { const i = Number(m.n) - 1, p = num(m.preco); if (viz[i] && plausivel(p)) mercados[norm(viz[i].nome)] = p; });
       const fontes = (((cand.groundingMetadata || {}).groundingChunks) || []).map((g) => g.web).filter((w) => w && w.uri)
         .map((w) => ({ titulo: String(w.title || "fonte").slice(0, 40), url: w.uri })).slice(0, 4);
-      const v = { estado: "ok", ofertas, fontes };
+      const v = { estado: "ok", ofertas, mercados, fontes };
       webCachePut(k, v);
       return v;
     }
-    return { estado: limite ? "limite" : "erro" };
+    return { estado: limite ? "limite" : "erro", detalhe: falhas.join("; ") };
   }
 
   // Ao reconhecer um produto novo: busca preços da base e da internet em paralelo, sem travar a câmera.
   function consultarPrecos(r) {
-    const okWeb = r.confianca !== "baixa" && !!tamanhoN(r.tamanho || r.produto);
-    r._web = okWeb ? { estado: "buscando" } : { estado: "pulado" };
-    if (okWeb) buscarWeb(r).catch(() => ({ estado: "erro" })).then((w) => { r._web = w; refresh(r); });
+    r._web = { estado: "buscando" };
+    // espera até 6 s pelos mercados próximos, para já pesquisar o preço neles
+    const espera = Promise.race([vizPromise || Promise.resolve(), new Promise((ok) => setTimeout(ok, 6000))]);
+    espera.then(() => buscarWeb(r)).catch((e) => ({ estado: "erro", detalhe: String(e && e.message || e).slice(0, 120) }))
+      .then((w) => { r._web = w; refresh(r); });
     if (baseOn() && norm(r.marca)) buscarNuvem(norm(r.marca)).then((l) => { r._nuvem = l; refresh(r); }).catch(() => {});
     refresh(r);
+  }
+
+  // ---------- Mercados próximos para comparar (2 supermercados de redes diferentes) ----------
+  let vizinhos = [];
+  let vizEstado = "";            // buscando | ok | sem-local | vazio
+  let vizRegiao = "";
+  let vizPromise = null;
+  const VIZ_KEY = "prateleira-vizinhos-v1";
+  let vizRodando = false;
+  function carregarVizinhos(force) {
+    if (vizRodando && !force) return vizPromise;   // já está buscando: aproveita a mesma busca
+    vizRodando = true;
+    vizPromise = (async () => {
+      let c = null;
+      try { c = JSON.parse(localStorage.getItem(VIZ_KEY) || "null"); } catch (e) {}
+      let lista = c && !force && Date.now() - c.t < 30 * 60e3 ? c.lista : null;
+      if (!lista) {
+        vizEstado = "buscando"; if (last) refresh(last);
+        const pos = await pegarPosicao();
+        if (!pos) { vizEstado = "sem-local"; vizinhos = []; if (last) refresh(last); return; }
+        const lat = pos.coords.latitude, lon = pos.coords.longitude;
+        ultimaPos = { lat, lon };
+        lista = await mercadosPerto(lat, lon, 3000, true);
+        if (lista.length < 3) lista = await mercadosPerto(lat, lon, 8000, true);
+        lista = lista.slice(0, 20).map((m) => ({ id: m.id, nome: m.nome, rede: m.rede, bairro: m.bairro, cidade: m.cidade, dist: m.dist }));
+        vizRegiao = await cidadeDe(lat, lon);
+        try { localStorage.setItem(VIZ_KEY, JSON.stringify({ t: Date.now(), lista, regiao: vizRegiao })); } catch (e) {}
+      } else vizRegiao = c.regiao || "";
+      // tira o mercado onde a pessoa está (e a mesma rede dele)
+      const redeAtual = mercado ? redeDe(mercado) : "";
+      vizinhos = escolherDois(lista.filter((m) => !(mercado && (m.id === mercado.id || redeDe(m) === redeAtual))));
+      vizEstado = vizinhos.length ? "ok" : "vazio";
+      if (last) refresh(last);
+    })().finally(() => { vizRodando = false; });
+    return vizPromise;
   }
 
   // ---------- Mercado onde a pessoa está (localização + mapa aberto OpenStreetMap) ----------
@@ -1427,6 +1537,7 @@ body.card-on #confirm { visibility: hidden; }
     mercado = { id: m.id, nome: m.nome, lat: r4(m.lat), lon: r4(m.lon) };
     try { localStorage.setItem(MKT_KEY, JSON.stringify({ t: Date.now(), m: mercado })); } catch (e) {}
     mostrarMercado();
+    if (cameraOn) carregarVizinhos(false);   // refaz a escolha dos 2 mercados próximos sem o mercado atual
     if (last) refresh(last);
   }
   async function mercadosPerto(lat, lon, raio, soGrandes) {
@@ -1512,10 +1623,13 @@ body.card-on #confirm { visibility: hidden; }
     } catch (e) { return ""; }
   }
   // Os dois supermercados mais próximos, de redes diferentes.
+  function redeDe(m) {
+    return norm(m.rede || m.nome).split(" ").filter((w) => !/^(super|supermercado|supermercados|mercado|mercados|hiper|atacado|atacadista)$/.test(w))[0] || norm(m.nome);
+  }
   function escolherDois(lista) {
     const out = [], redes = new Set();
     for (const m of lista) {
-      const rede = norm(m.rede || m.nome).split(" ").filter((w) => !/^(super|supermercado|supermercados|mercado|hiper|atacado|atacadista)$/.test(w))[0] || norm(m.nome);
+      const rede = redeDe(m);
       if (redes.has(rede)) continue;
       redes.add(rede); out.push(m);
       if (out.length === 2) break;
@@ -1542,6 +1656,52 @@ body.card-on #confirm { visibility: hidden; }
     });
     return melhor;
   }
+  // Item sem marca ganha a marca mais vendida/conhecida; sem tamanho, a embalagem mais comum.
+  // A mesma escolha vale para os dois mercados, para a comparação ser justa.
+  const PAD_KEY = "prateleira-padrao-v1";
+  async function padronizarItens(itens) {
+    let cache = {};
+    try { cache = JSON.parse(localStorage.getItem(PAD_KEY) || "{}"); } catch (e) {}
+    const out = itens.map((t) => cache[norm(t)] || null);
+    const falta = itens.map((t, i) => (out[i] ? null : i)).filter((i) => i !== null);
+    if (falta.length) {
+      try {
+        await loadModels();
+        const ask = [
+          "Itens de uma lista de compras de supermercado no Brasil (Santa Catarina).",
+          "Para cada item, defina o produto exato a pesquisar:",
+          "- se a pessoa não disse a marca, use a marca mais vendida ou mais conhecida no Brasil para esse tipo de produto;",
+          "- se não disse o tamanho, use a embalagem mais comum (peso ou volume);",
+          "- mantenha marca, tamanho e tipo quando a pessoa informou;",
+          "- qtd = quantas embalagens ela pediu (1 se não disse).",
+          "Itens:",
+          falta.map((i, k) => (k + 1) + ". " + itens[i]).join("\n"),
+          'Responda só com JSON: {"itens":[{"n":1,"produto":"Arroz Tio João Tipo 1 5 kg","marca":"Tio João","tamanho":"5 kg","qtd":1,"marca_sugerida":true,"tamanho_sugerido":false}]}'
+        ].join("\n");
+        for (const name of pickModels().slice(0, 3)) {
+          const res = await fetch(API + "/models/" + name + ":generateContent", {
+            method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": code },
+            body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: ask }] }], generationConfig: { responseMimeType: "application/json", temperature: 0.1, maxOutputTokens: 3000 } })
+          });
+          if (!res.ok) { if (res.status === 429) blocked.add(name); continue; }
+          const d = await res.json();
+          const parts = (((d.candidates || [])[0] || {}).content || {}).parts || [];
+          const j = parseJSON(parts.filter((x) => !x.thought).map((x) => x.text || "").join(""));
+          ((j && j.itens) || []).forEach((x) => {
+            const i = falta[Number(x.n) - 1];
+            if (i === undefined || !x.produto) return;
+            out[i] = { produto: String(x.produto).slice(0, 100), marca: String(x.marca || ""), tamanho: String(x.tamanho || ""),
+              qtd: Math.max(1, Math.min(50, Math.round(Number(x.qtd) || 1))), marca_sugerida: !!x.marca_sugerida, tamanho_sugerido: !!x.tamanho_sugerido };
+            cache[norm(itens[i])] = out[i];
+          });
+          break;
+        }
+        try { localStorage.setItem(PAD_KEY, JSON.stringify(cache)); } catch (e) {}
+      } catch (e) {}
+    }
+    return out.map((p, i) => p || { produto: itens[i], qtd: 1 });
+  }
+
   async function precosNaInternet(m, itens, regiao) {
     if (!itens.length) return {};
     await loadModels();
@@ -1550,13 +1710,14 @@ body.card-on #confirm { visibility: hidden; }
     const ask = [
       'Pesquise na internet os preços atuais, em reais, destes itens de uma lista de compras no supermercado "' + m.nome + '"' + (regiao ? " (" + regiao + ")" : "") + ".",
       "Use o site, o aplicativo, o encarte ou as ofertas desse mercado ou da rede dele. Se não achar o preço do item nesse mercado, use null: não use preço de outra loja e não estime.",
-      "Para cada item, escolha o produto mais comum e barato que atenda ao que foi pedido, respeitando o tamanho quando informado.",
-      "Itens:",
+      "Procure o produto exato de cada item (marca e tamanho). Se esse mercado não tiver essa marca, pode usar outra marca do mesmo tipo e tamanho, informando o produto encontrado.",
+      "Itens (produto a procurar):",
       itens.map((t, i) => (i + 1) + ". " + t).join("\n"),
-      'Responda só com JSON, sem texto fora dele: {"itens":[{"n":1,"produto":"nome do produto encontrado","preco":12.99,"qtd":1}]}',
-      "qtd = quantas unidades desse produto a pessoa pediu (1 se ela não disse)."
+      'Responda só com JSON, sem texto fora dele: {"itens":[{"n":1,"produto":"nome do produto encontrado","preco":12.99}]}',
+      "preco = preço de uma embalagem."
     ].join("\n");
     let limite = false;
+    const falhas = [];
     for (const name of tries) {
       const call = (think) => fetch(API + "/models/" + name + ":generateContent", {
         method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": code },
@@ -1567,12 +1728,18 @@ body.card-on #confirm { visibility: hidden; }
         })
       });
       let res;
-      try { res = await call(true); if (res.status === 400) res = await call(false); } catch (e) { continue; }
+      try { res = await call(true); if (res.status === 400) res = await call(false); } catch (e) { falhas.push(name + ": sem conexão"); continue; }
       if (res.status === 429) { limite = true; webBlocked.add(name); continue; }
-      if (!res.ok) continue;
+      if (!res.ok) {
+        let msg = "";
+        try { msg = ((await res.json()).error || {}).message || ""; } catch (e) {}
+        falhas.push(name + ": erro " + res.status + (msg ? " (" + msg.slice(0, 120) + ")" : ""));
+        continue;
+      }
       const d = await res.json();
       const cand = (d.candidates || [])[0] || {};
       const j = parseJSON(((cand.content || {}).parts || []).filter((p) => !p.thought).map((p) => p.text || "").join(""));
+      if (!j) { falhas.push(name + ": resposta sem dados"); continue; }
       const out = {};
       ((j && j.itens) || []).forEach((x) => {
         const n = Number(x.n) - 1;
@@ -1582,7 +1749,7 @@ body.card-on #confirm { visibility: hidden; }
       });
       return out;
     }
-    return { erro: limite ? "limite" : "falha" };
+    return { erro: limite ? "limite" : "falha", detalhe: falhas.join("; ") };
   }
 
   function quoteMsg(t) {
@@ -1609,7 +1776,10 @@ body.card-on #confirm { visibility: hidden; }
       const dois = escolherDois(lista);
       if (!dois.length) { quoteMsg("Não encontrei supermercados perto de você no mapa. Tente de novo em outro lugar."); return; }
       const regiao = await cidadeDe(lat, lon);
-      quoteMsg("Pesquisando " + itens.length + (itens.length === 1 ? " item" : " itens") + " em " + dois.map((m) => m.nome).join(" e ") + "… pode levar até 1 minuto.");
+      quoteMsg("Definindo marca e tamanho dos itens…");
+      const pad = await padronizarItens(itens);
+      const busca = pad.map((p) => p.produto);
+      quoteMsg("Pesquisando "+ itens.length + (itens.length === 1 ? " item" : " itens") + " em " + dois.map((m) => m.nome).join(" e ") + "… pode levar até 1 minuto.");
       // Preços dos usuários (este celular + base colaborativa), por mercado.
       let registros = lerPrecos();
       if (baseOn()) {
@@ -1617,13 +1787,14 @@ body.card-on #confirm { visibility: hidden; }
         registros = registros.concat(...extra);
       }
       const colunas = await Promise.all(dois.map(async (m) => {
-        const precos = itens.map((it) => precoDosUsuarios(it, m, registros));
-        const faltam = itens.map((it, i) => (precos[i] ? null : i)).filter((i) => i !== null);
-        const web = await precosNaInternet(m, faltam.map((i) => itens[i]), regiao);
+        const precos = busca.map((it) => precoDosUsuarios(it, m, registros));
+        const faltam = busca.map((it, i) => (precos[i] ? null : i)).filter((i) => i !== null);
+        const web = await precosNaInternet(m, faltam.map((i) => busca[i]), regiao);
         faltam.forEach((i, k) => { if (web[k]) precos[i] = web[k]; });
-        return { m, precos, erro: web.erro || "" };
+        precos.forEach((p, i) => { if (p) p.qtd = pad[i].qtd || 1; });
+        return { m, precos, erro: web.erro || "", detalhe: web.detalhe || "" };
       }));
-      const res = { quando: Date.now(), itens, colunas: colunas.map((c) => ({ nome: c.m.nome, dist: c.m.dist, precos: c.precos, erro: c.erro })) };
+      const res = { quando: Date.now(), itens, pad, colunas: colunas.map((c) => ({ nome: c.m.nome, dist: c.m.dist, precos: c.precos, erro: c.erro, detalhe: c.detalhe })) };
       try { localStorage.setItem(QUOTE_KEY, JSON.stringify(res)); } catch (e) {}
       mostrarCotacao(res);
     } finally {
@@ -1648,7 +1819,13 @@ body.card-on #confirm { visibility: hidden; }
     let ambos = 0, somaA = 0, somaB = 0;
     res.itens.forEach((it, i) => {
       const tr = el("tr");
-      tr.append(el("td", "", it));
+      const tdI = el("td", "", it);
+      const pd = res.pad && res.pad[i];
+      if (pd && norm(pd.produto) !== norm(it)) {
+        const sug = [pd.marca_sugerida ? "marca mais vendida" : "", pd.tamanho_sugerido ? "tamanho mais comum" : ""].filter(Boolean).join(", ");
+        tdI.append(el("span", "pd", "→ " + (pd.qtd > 1 ? pd.qtd + "× " : "") + pd.produto + (sug ? " (" + sug + ")" : "")));
+      }
+      tr.append(tdI);
       const vals = res.colunas.map((c) => custo(c.precos[i]));
       const minV = Math.min(...vals.filter((v) => v != null));
       res.colunas.forEach((c, k) => {
@@ -1687,7 +1864,10 @@ body.card-on #confirm { visibility: hidden; }
     box.append(v);
     const erros = res.colunas.filter((c) => c.erro === "limite");
     if (erros.length) box.append(el("p", "fine", "Limite gratuito de buscas na internet atingido: alguns itens podem ter ficado sem preço. Tente mais tarde."));
-    box.append(el("p", "fine", "✓ = preço registrado por usuários no mercado (últimos 30 dias). * = preço achado na internet, pode estar desatualizado ou ser de outra unidade da rede. O total soma só os itens achados."));
+    res.colunas.filter((c) => c.erro && c.erro !== "limite").forEach((c) => {
+      box.append(el("p", "fine", "A busca na internet falhou em " + c.nome + ": " + (c.detalhe || (c.erro === "sem modelo" ? "sua chave não tem os modelos Gemini 2.5, os únicos com pesquisa Google gratuita" : "motivo desconhecido")) + "."));
+    });
+    box.append(el("p", "fine", "✓ = preço registrado por usuários no mercado (últimos 30 dias). * = preço achado na internet, pode estar desatualizado ou ser de outra unidade da rede. O total soma só os itens achados. Item sem marca ou tamanho foi pesquisado com a marca mais vendida e a embalagem mais comum (indicado abaixo do item)."));
     box.hidden = false;
   }
   try { const q = JSON.parse(localStorage.getItem(QUOTE_KEY) || "null"); if (q && q.colunas) mostrarCotacao(q); } catch (e) {}
