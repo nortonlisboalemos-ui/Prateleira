@@ -209,6 +209,146 @@ body.card-on #confirm { visibility: hidden; }
 #quoteBox .verdict strong { color: var(--tag); }
 #quoteBox .fine { font-size: 12px; color: var(--muted); line-height: 1.4; }
 .ghostlink { appearance: none; border: 0; background: transparent; color: var(--muted); text-decoration: underline; font: 14px var(--font-body); cursor: pointer; }
+/* ======================================================================
+   v15: telas claras (início, pesquisa, lista, cupom, mercados) no estilo
+   "toque fácil": cartões grandes, barra de busca e barra inferior de abas.
+   A câmera continua escura, por cima do vídeo.
+   ====================================================================== */
+:root {
+  --bg: #f3f5f4; --surface: #ffffff; --line: #e1e7e3; --tx: #14201a; --tx2: #5d6b63;
+  --pri: #17804a; --pri-ink: #ffffff; --pri-soft: #e5f3eb; --amber: #b86b00; --amber-soft: #fff3dc;
+  --blue-soft: #e8f0fe; --pink-soft: #fde8f1; --tabh: 64px;
+}
+.screen {
+  background: var(--bg); color: var(--tx); justify-content: flex-start; align-items: stretch; text-align: left; gap: 14px; overflow-y: auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 18px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + var(--tabh) + 24px) max(16px, env(safe-area-inset-left, 0px));
+  color-scheme: light;
+}
+.screen > * { width: 100%; max-width: 560px; margin-left: auto; margin-right: auto; }
+.screen.center { justify-content: center; align-items: center; text-align: center; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); }
+.screen.center > * { width: auto; }
+.screen h1 { font-family: var(--font-display); font-weight: 700; font-size: 34px; line-height: 1.05; margin: 0; color: var(--tx); }
+.screen p { color: var(--tx2); max-width: none; }
+.screen .muted { font-size: 15px; line-height: 1.45; }
+.screen input[type="password"], .screen input[type="text"], .screen input[type="search"] {
+  font: 17px var(--font-body); padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--tx); width: 100%; text-align: left;
+}
+.screen.center input[type="password"] { width: min(300px, 80vw); text-align: center; }
+.screen .btn { min-width: 0; width: 100%; background: var(--pri); color: var(--pri-ink); border-radius: 12px; font-size: 17px; padding: 14px 18px; display: block; text-align: center; }
+.screen.center .btn { width: min(300px, 80vw); }
+.screen .btn.ghost { background: var(--surface); color: var(--tx); border: 1px solid var(--line); }
+.screen .btn.sm { width: auto; padding: 12px 16px; font-size: 16px; }
+.screen .btn:disabled { opacity: 0.55; }
+.screen .err { color: #c0352b; }
+.screen a { color: var(--pri); }
+.kick { display: flex; align-items: center; gap: 6px; color: var(--pri); font: 600 15px var(--font-body); }
+.kick svg { width: 18px; height: 18px; }
+.screen .ver { color: var(--tx2); }
+.hd { display: flex; flex-direction: column; gap: 4px; }
+.hd .lead { margin: 0; font-size: 16px; }
+.bar { display: flex; align-items: center; gap: 10px; }
+.back { appearance: none; border: 0; background: transparent; color: var(--tx); font: 400 34px/1 var(--font-body); padding: 0 6px 4px 0; cursor: pointer; }
+.search { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 6px 6px 6px 12px; }
+.search svg.mag { width: 20px; height: 20px; color: var(--tx2); flex: none; }
+.screen .search input[type="search"] { border: 0; padding: 8px 2px; background: transparent; flex: 1; min-width: 0; outline: none; -webkit-appearance: none; }
+.scan { appearance: none; border: 0; width: 46px; height: 46px; border-radius: 12px; background: var(--pri); color: #fff; display: grid; place-items: center; cursor: pointer; flex: none; }
+.scan svg { width: 24px; height: 24px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--tx); border-radius: 16px; padding: 14px 12px; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 8px; min-height: 112px; font-family: var(--font-body); }
+.tile b { font-size: 16px; line-height: 1.2; }
+.tile small { font-size: 13px; color: var(--tx2); line-height: 1.3; }
+.ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; }
+.ic svg { width: 22px; height: 22px; }
+.ic.g { background: var(--pri-soft); color: var(--pri); }
+.ic.b { background: var(--blue-soft); color: #2456c9; }
+.ic.o { background: var(--amber-soft); color: var(--amber); }
+.ic.p { background: var(--pink-soft); color: #c22f6f; }
+.tile:active, .chipb:active, .res:active { transform: scale(0.98); }
+.block { display: flex; flex-direction: column; gap: 8px; }
+.block h2 { font: 700 20px var(--font-display); margin: 4px 0 0; color: var(--tx); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chipb { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--tx); border-radius: 999px; padding: 8px 14px; font: 600 14px var(--font-body); cursor: pointer; }
+.rowlink { display: flex; justify-content: space-between; align-items: baseline; }
+.rowlink button { appearance: none; border: 0; background: none; color: var(--pri); font: 600 14px var(--font-body); cursor: pointer; padding: 0; }
+#tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; justify-content: space-around; align-items: flex-end;
+  background: var(--surface); border-top: 1px solid var(--line); padding: 6px 4px calc(env(safe-area-inset-bottom, 0px) + 6px); color-scheme: light;
+}
+#tabbar button { appearance: none; border: 0; background: none; color: #8a968f; font: 600 11px var(--font-body); display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; flex: 1; padding: 4px 0; }
+#tabbar button svg { width: 24px; height: 24px; }
+#tabbar button[aria-current="page"] { color: var(--pri); }
+#tabbar button.cam span.c { width: 52px; height: 52px; margin-top: -22px; border-radius: 50%; background: var(--pri); color: #fff; display: grid; place-items: center; box-shadow: 0 4px 14px rgba(23,128,74,0.35); }
+#tabbar button.cam { color: var(--pri); }
+/* resultados da pesquisa */
+.results { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.res { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; }
+.res.best { border-color: var(--pri); box-shadow: 0 0 0 1px var(--pri) inset; }
+.res .nm { font-weight: 600; font-size: 15px; line-height: 1.3; }
+.res .meta { grid-column: 1 / 2; font-size: 13px; color: var(--tx2); line-height: 1.35; }
+.res .pr { grid-row: 1 / 3; grid-column: 2; text-align: right; font: 700 24px var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.res .pr small { display: block; font: 400 12px var(--font-body); color: var(--tx2); }
+.res .acts { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 3px 10px; font: 600 12px var(--font-body); background: var(--pri-soft); color: var(--pri); text-decoration: none; border: 0; cursor: pointer; }
+.pill.warn { background: var(--amber-soft); color: var(--amber); }
+.pill.gray { background: #eef1ef; color: var(--tx2); }
+.sumcard { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+.sumcard .big { font: 700 34px var(--font-display); font-variant-numeric: tabular-nums; }
+.screen .fine { font-size: 12px; color: var(--tx2); line-height: 1.45; margin: 0; }
+/* lista de compras clara */
+#listScreen { align-items: stretch; }
+#listScreen .mic { align-self: center; width: 112px; height: 112px; background: var(--pri); color: #fff; box-shadow: 0 6px 18px rgba(23,128,74,0.3); }
+#listScreen .mic.on { background: #d9342b; }
+#listScreen #micMsg { text-align: center; }
+.screen .addrow { width: 100%; }
+#shopList { width: 100%; }
+#shopList li { background: var(--surface); border: 1px solid var(--line); }
+#shopList .tx { color: var(--tx); }
+#shopList .chk { border-color: var(--pri); color: var(--pri); }
+#shopList li.done .chk { background: var(--pri); color: #fff; }
+#shopList li.done .tx { color: var(--tx2); }
+#shopList .del { color: var(--tx2); }
+#quoteBox { width: 100%; }
+#quoteBox th, #quoteBox td { border-bottom-color: var(--line); }
+#quoteBox th { color: var(--tx); }
+#quoteBox td.best { color: var(--pri); }
+#quoteBox td.none { color: #9aa59f; }
+#quoteBox .verdict { background: var(--pri-soft); border-color: var(--pri); color: var(--tx); }
+#quoteBox .verdict strong { color: var(--pri); }
+#quoteBox .qmsg, #quoteBox .fine, #quoteBox td.v .pn, #quoteBox td .pd { color: var(--tx2); }
+.screen .ghostlink { color: var(--tx2); align-self: center; width: auto; }
+/* preços salvos e mercados claros */
+#savedList, #mktList { width: 100%; }
+#savedList li { background: var(--surface); border: 1px solid var(--line); color: var(--tx); }
+#savedList .p { color: var(--pri); }
+#savedList .d { color: var(--tx2); }
+#mktList li { display: flex; gap: 6px; }
+#mktList button.pick { flex: 1; border-color: var(--line); background: var(--surface); color: var(--tx); }
+#mktList button.pick[aria-current="true"] { border-color: var(--pri); box-shadow: 0 0 0 1px var(--pri) inset; }
+#mktList .km { color: var(--tx2); }
+#mktList button.star { flex: none; width: 48px; justify-content: center; border-color: var(--line); background: var(--surface); color: #b9c2bd; font-size: 22px; padding: 0; }
+#mktList button.star[aria-pressed="true"] { color: #e0a100; }
+#mktList .sub { font-size: 12px; color: var(--tx2); font-weight: 400; display: block; }
+/* cupom fiscal */
+.thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+.thumbs img { width: 64px; height: 86px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
+.two { display: flex; gap: 8px; }
+.two > * { flex: 1; }
+.cuplist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.cuplist li { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: grid; grid-template-columns: auto 1fr auto; gap: 2px 10px; align-items: start; }
+.cuplist input[type="checkbox"] { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--pri); }
+.cuplist .nm { font-weight: 600; font-size: 15px; }
+.cuplist .raw { grid-column: 2; font-size: 12px; color: var(--tx2); }
+.cuplist .pr { grid-row: 1 / 3; grid-column: 3; text-align: right; font: 700 20px var(--font-display); white-space: nowrap; }
+.cuplist .pr small { display: block; font: 400 11px var(--font-body); color: var(--tx2); }
+/* câmera: origem da identificação */
+.chip.cod { background: #1f7a4d; color: #fff; }
+.chip.apar { background: #9a5a00; color: #fff; }
+#tagf .via { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: #cfe9da; }
+#tagf .via.apar { color: #ffd59a; }
+.tag .acts2 { display: flex; gap: 8px; flex-wrap: wrap; }
+.tag .unit { font-size: 12px; font-weight: 400; opacity: 0.8; }
+.tag .media { font-size: 13px; font-weight: 600; }
+.go { font-size: 12px; font-weight: 600; margin-left: 4px; }
 [hidden] { display: none !important; }
 @media (prefers-reduced-motion: reduce) { #reticle.busy { animation: none; } #card, #box { transition: none; } }
 </style>
@@ -222,7 +362,7 @@ body.card-on #confirm { visibility: hidden; }
 <div class="top">
   <div class="lt">
     <button type="button" id="homeBtn" class="homeb" aria-label="Voltar ao início">‹ Início</button>
-    <span class="brand">Prateleira<span class="ver">v14</span></span>
+    <span class="brand">Prateleira<span class="ver">v15</span></span>
   </div>
   <div class="seg" role="group" aria-label="Modo da IA">
     <button type="button" id="mFast" aria-pressed="true">Rápido</button>
@@ -247,52 +387,67 @@ body.card-on #confirm { visibility: hidden; }
   </div>
 </div>
 
-<section class="screen" id="savedScreen" hidden>
-  <h1>Preços salvos</h1>
-  <p id="savedInfo"></p>
-  <ul id="savedList"></ul>
-  <button class="btn" type="button" id="savedClose">Voltar à câmera</button>
-</section>
-
-<section class="screen" id="codeScreen" hidden>
-  <h1>Prateleira</h1>
-  <p>Cole a sua chave gratuita do Google AI Studio. Ela fica guardada só neste celular.</p>
-  <form id="codeForm">
-    <input type="password" id="codeInput" autocomplete="off" aria-label="Chave do Google AI Studio" placeholder="Cole a chave aqui">
-  </form>
-  <button class="btn" type="submit" form="codeForm">Começar</button>
-  <p><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color: var(--tag)">Pegar a chave no Google AI Studio</a></p>
-  <span class="err" id="codeErr" hidden></span>
-</section>
-
-<section class="screen" id="startScreen" hidden>
-  <h1>Prateleira</h1>
-  <p id="startMsg">Toque para abrir a câmera. Aponte para a prateleira e pare sobre um produto.</p>
-  <button class="btn" type="button" id="startBtn">Abrir câmera</button>
-  <button class="btn ghost" type="button" id="startHome">Início</button>
-</section>
-
-<section class="screen" id="mktScreen" hidden>
-  <h1>Em qual mercado você está?</h1>
-  <p id="mktInfo">Os preços que você registrar ficam ligados a este mercado.</p>
-  <ul id="mktList"></ul>
-  <form id="mktForm" class="addrow">
-    <input type="text" id="mktInput" autocomplete="off" placeholder="Outro: digite o nome" aria-label="Nome do mercado">
-    <button class="btn sm" type="submit">Usar</button>
-  </form>
-  <button class="btn" type="button" id="mktLocate">Localizar de novo</button>
-  <button class="btn ghost" type="button" id="mktClose">Voltar à câmera</button>
-</section>
-
 <section class="screen" id="homeScreen" hidden>
-  <h1>Prateleira</h1>
-  <p>O que você quer fazer agora?</p>
-  <button class="btn big" type="button" id="goList">Minha lista de compras<span>fale, digite ou risque itens</span></button>
-  <button class="btn big alt" type="button" id="goShelf">Consultar prateleira<span>aponte a câmera no mercado</span></button>
+  <header class="hd">
+    <div class="kick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Prateleira <span class="ver">v15</span></div>
+    <h1>Encontre o melhor preço</h1>
+    <p class="lead">Aponte a câmera, pesquise ou monte a sua lista.</p>
+  </header>
+  <form id="homeSearch" class="search" role="search">
+    <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input type="search" id="homeSearchInput" placeholder="Produto, marca ou tamanho" aria-label="Pesquisar produto" enterkeyhint="search" autocomplete="off">
+    <button type="button" class="scan" id="scanBtn" aria-label="Abrir a câmera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M8 9v6M11 9v6M14 9v6M17 9v6"/></svg></button>
+  </form>
+  <div class="grid">
+    <button class="tile" type="button" id="goShelf"><span class="ic g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><b>Consultar prateleira</b><small>aponte a câmera no produto</small></button>
+    <button class="tile" type="button" id="goList"><span class="ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2 3h3l2.6 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.5L22 8H6"/></svg></span><b>Lista de compras</b><small>fale, digite e compare</small></button>
+    <button class="tile" type="button" id="goCupom"><span class="ic o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></span><b>Ler cupom fiscal</b><small>os preços da nota entram na base</small></button>
+    <button class="tile" type="button" id="goMkt"><span class="ic p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg></span><b>Mercados</b><small>favoritos e próximos</small></button>
+  </div>
+  <section class="block">
+    <h2>Atalhos</h2>
+    <div class="chips" id="quickChips"></div>
+  </section>
+  <section class="block" id="recentBlock" hidden>
+    <div class="rowlink"><h2>Buscas recentes</h2><button type="button" id="recentClear">Limpar</button></div>
+    <div class="chips" id="recentChips"></div>
+  </section>
+  <section class="block">
+    <div class="rowlink"><h2>Meus registros</h2><button type="button" id="homeSaved">Ver todos</button></div>
+    <p class="muted" id="homeSavedInfo"></p>
+  </section>
+</section>
+
+<section class="screen" id="searchScreen" hidden>
+  <div class="bar"><button type="button" class="back" id="searchBack" aria-label="Voltar">‹</button><h1>Pesquisar</h1></div>
+  <form id="searchForm" class="search" role="search">
+    <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input type="search" id="searchInput" placeholder="Ex.: café pilão 500 g" aria-label="Pesquisar produto" enterkeyhint="search" autocomplete="off">
+    <button type="submit" class="scan" aria-label="Pesquisar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+  </form>
+  <div id="searchSum"></div>
+  <p class="muted" id="searchMsg" aria-live="polite"></p>
+  <ul class="results" id="searchList"></ul>
+  <p class="fine" id="searchFine"></p>
+</section>
+
+<section class="screen" id="cupomScreen" hidden>
+  <div class="bar"><h1>Cupom fiscal</h1></div>
+  <p class="muted">Fotografe o cupom (NFC-e) inteiro, com o QR code. Se for comprido, tire mais de uma foto, de cima para baixo. Os preços entram na base, ligados ao mercado da compra.</p>
+  <div class="two">
+    <label class="btn" for="cupomCam">Fotografar</label>
+    <label class="btn ghost" for="cupomGal">Da galeria</label>
+  </div>
+  <input type="file" id="cupomCam" accept="image/*" capture="environment" hidden>
+  <input type="file" id="cupomGal" accept="image/*" multiple hidden>
+  <div class="thumbs" id="cupomThumbs"></div>
+  <button class="btn" type="button" id="cupomRead" hidden>Ler itens do cupom</button>
+  <button type="button" class="ghostlink" id="cupomReset" hidden>Recomeçar</button>
+  <div id="cupomOut" class="block" aria-live="polite"></div>
 </section>
 
 <section class="screen" id="listScreen" hidden>
-  <h1>Minha lista</h1>
+  <div class="bar"><h1>Minha lista</h1></div>
   <button type="button" class="mic" id="micBtn">Falar itens</button>
   <p id="micMsg" aria-live="polite">Ex.: "arroz, feijão e detergente"</p>
   <form id="addForm" class="addrow">
@@ -304,9 +459,53 @@ body.card-on #confirm { visibility: hidden; }
   <button class="btn" type="button" id="quoteBtn" hidden>Pesquisar preços da lista</button>
   <div id="quoteBox" aria-live="polite" hidden></div>
   <button type="button" class="ghostlink" id="clearDone" hidden>Apagar itens riscados</button>
-  <button class="btn" type="button" id="listShelf">Ir para a prateleira</button>
-  <button class="btn ghost" type="button" id="listHome">Início</button>
+  <button class="btn ghost" type="button" id="listShelf">Ir para a prateleira</button>
 </section>
+
+<section class="screen" id="savedScreen" hidden>
+  <div class="bar"><button type="button" class="back" id="savedBack" aria-label="Voltar">‹</button><h1>Preços salvos</h1></div>
+  <p class="muted" id="savedInfo"></p>
+  <ul id="savedList"></ul>
+  <button class="btn" type="button" id="savedClose">Voltar</button>
+</section>
+
+<section class="screen" id="mktScreen" hidden>
+  <div class="bar"><button type="button" class="back" id="mktBack" aria-label="Voltar">‹</button><h1>Mercados</h1></div>
+  <p class="muted" id="mktInfo">Os preços que você registrar ficam ligados ao mercado escolhido. Toque na estrela para marcar favoritos: eles têm prioridade nas comparações.</p>
+  <ul id="mktList"></ul>
+  <form id="mktForm" class="addrow">
+    <input type="text" id="mktInput" autocomplete="off" placeholder="Outro: digite o nome" aria-label="Nome do mercado">
+    <button class="btn sm" type="submit">Usar</button>
+  </form>
+  <button class="btn" type="button" id="mktLocate">Localizar de novo</button>
+  <button class="btn ghost" type="button" id="mktClose">Voltar</button>
+</section>
+
+<section class="screen center" id="codeScreen" hidden>
+  <h1>Prateleira</h1>
+  <p class="muted">Cole a sua chave gratuita do Google AI Studio. Ela fica guardada só neste celular.</p>
+  <form id="codeForm">
+    <input type="password" id="codeInput" autocomplete="off" aria-label="Chave do Google AI Studio" placeholder="Cole a chave aqui">
+  </form>
+  <button class="btn" type="submit" form="codeForm">Começar</button>
+  <p><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Pegar a chave no Google AI Studio</a></p>
+  <span class="err" id="codeErr" hidden></span>
+</section>
+
+<section class="screen center" id="startScreen" hidden>
+  <h1>Prateleira</h1>
+  <p class="muted" id="startMsg">Toque para abrir a câmera. Aponte para a prateleira e pare sobre um produto.</p>
+  <button class="btn" type="button" id="startBtn">Abrir câmera</button>
+  <button class="btn ghost" type="button" id="startHome">Início</button>
+</section>
+
+<nav id="tabbar" aria-label="Navegação" hidden>
+  <button type="button" data-go="homeScreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Início</button>
+  <button type="button" data-go="searchScreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Pesquisa</button>
+  <button type="button" data-go="camera" class="cam"><span class="c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span>Câmera</button>
+  <button type="button" data-go="listScreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>Lista</button>
+  <button type="button" data-go="cupomScreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Cupom</button>
+</nav>
 
 <script>
 (function () {
@@ -338,6 +537,7 @@ body.card-on #confirm { visibility: hidden; }
   let pauseUntil = 0;            // pausa curta enquanto a pessoa toca na confirmação
   let sheetOpen = false;         // tela de mercado ou de preços salvos aberta: a IA espera
   let lastMs = 0;
+  const LIGHT = ["homeScreen", "searchScreen", "cupomScreen", "listScreen"];
 
   try { code = localStorage.getItem("prateleira-chave-gemini") || ""; } catch (e) {}
   // Link de teste: a chave pode vir no final do endereço (#chave=...). Ela é guardada neste
@@ -381,7 +581,11 @@ body.card-on #confirm { visibility: hidden; }
       });
       video.srcObject = stream;
       await video.play();
-      ["startScreen", "homeScreen", "listScreen", "savedScreen"].forEach((id) => { $(id).hidden = true; });
+      LIGHT.concat(["startScreen", "savedScreen", "mktScreen"]).forEach((id) => { $(id).hidden = true; });
+      document.body.classList.remove("light");
+      $("tabbar").hidden = true;
+      sheetOpen = false;
+      prepararLeitor();
       try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
       cameraOn = true; needMove = false; stillSince = 0; prevFrame = null;
       vizEstado = "buscando";
@@ -460,6 +664,144 @@ body.card-on #confirm { visibility: hidden; }
     return shot.toDataURL("image/jpeg", 0.8).split(",")[1];
   }
 
+  // ---------- Leitura de código de barras e QR code (no próprio celular, sem custo) ----------
+  // 1º tenta o leitor nativo do navegador (Chrome no Android). No Safari do iPhone ele vem
+  // desligado, então carrega um leitor gratuito (ZXing em WebAssembly) da CDN jsDelivr.
+  const LEITOR_URL = "https://cdn.jsdelivr.net/npm/barcode-detector@3.2.3/dist/iife/ponyfill.js";
+  const LEITOR_SRI = "sha384-ZQvvHKgw7Ktqkui5vapXokyfDpQcnXLZhR9hfFMh8rUQztTRNywKQdQ994308nhY";
+  const FORMATOS = ["ean_13", "ean_8", "upc_a", "qr_code"];
+  let leitor = null, leitorPromise = null;
+  function prepararLeitor() {
+    if (leitorPromise) return leitorPromise;
+    leitorPromise = (async () => {
+      try {
+        if ("BarcodeDetector" in window) {
+          const sup = await window.BarcodeDetector.getSupportedFormats();
+          const f = FORMATOS.filter((x) => sup.includes(x));
+          if (f.includes("ean_13")) { leitor = new window.BarcodeDetector({ formats: f }); return leitor; }
+        }
+      } catch (e) {}
+      try {
+        if (!window.BarcodeDetectionAPI) {
+          await new Promise((ok, fail) => {
+            const s = document.createElement("script");
+            s.src = LEITOR_URL; s.integrity = LEITOR_SRI; s.crossOrigin = "anonymous";
+            s.onload = ok; s.onerror = fail;
+            document.head.append(s);
+          });
+        }
+        leitor = new window.BarcodeDetectionAPI.BarcodeDetector({ formats: FORMATOS });
+      } catch (e) { leitor = null; }
+      return leitor;
+    })();
+    return leitorPromise;
+  }
+
+  // Dígito verificador do código (EAN/GTIN): descarta leituras erradas.
+  function gtinOk(d) {
+    if (!/^(\d{8}|\d{12,14})$/.test(d)) return false;
+    let soma = 0;
+    for (let i = 0; i < d.length - 1; i++) soma += Number(d[d.length - 2 - i]) * (i % 2 === 0 ? 3 : 1);
+    return (10 - (soma % 10)) % 10 === Number(d[d.length - 1]);
+  }
+  function normGtin(raw) {
+    let d = String(raw || "").replace(/\D/g, "");
+    if (d.length === 12) d = "0" + d;                     // UPC-A vira EAN-13
+    if (d.length === 14 && d[0] === "0") d = d.slice(1);
+    return d;
+  }
+  // Códigos que começam com 2 (ou 02/04) são de uso interno da loja (balança, etiqueta própria):
+  // não identificam o produto em outros mercados.
+  const gtinInterno = (d) => /^(2|02|04)/.test(d);
+  // Chave de acesso de 44 dígitos dentro do QR code da NFC-e (…?p=CHAVE|…).
+  function chaveNfce(txt) {
+    const s = String(txt || "");
+    const m = /[?&]p=(\d{44})/.exec(s) || (/^\d{44}$/.test(s.replace(/\s/g, "")) ? [0, s.replace(/\s/g, "")] : null);
+    return m ? m[1] : null;
+  }
+  function analisarCodigos(achados, larg, alt) {
+    const out = { ean: null, interno: null, nfce: null, caixa: null };
+    (achados || []).forEach((b) => {
+      const raw = String(b.rawValue || "");
+      if (b.format === "qr_code") { const k = chaveNfce(raw); if (k && !out.nfce) out.nfce = { chave: k, url: /^https?:\/\//.test(raw) ? raw : "" }; return; }
+      const d = normGtin(raw);
+      if (!gtinOk(d)) return;
+      if (gtinInterno(d)) { if (!out.interno) out.interno = d; return; }
+      if (!out.ean) {
+        out.ean = d;
+        const bb = b.boundingBox;
+        if (bb && larg && alt) out.caixa = { x: bb.x / larg, y: bb.y / alt, w: bb.width / larg, h: bb.height / alt };
+      }
+    });
+    return out;
+  }
+  // Lê a área central da imagem (onde a pessoa mira), em resolução boa para barras finas.
+  const scanCv = document.createElement("canvas");
+  async function lerCodigo() {
+    if (!leitor) { try { await Promise.race([prepararLeitor(), new Promise((ok) => setTimeout(ok, 1500))]); } catch (e) {} }
+    if (!leitor || !video.videoWidth) return null;
+    const iw = video.videoWidth, ih = video.videoHeight, vw = window.innerWidth, vh = window.innerHeight;
+    const s = Math.max(vw / iw, vh / ih), F = 0.85;
+    const sw = (vw / s) * F, sh = (vh / s) * F, sx = (iw - sw) / 2, sy = (ih - sh) / 2;
+    const k = Math.min(1, 1280 / Math.max(sw, sh));
+    scanCv.width = Math.round(sw * k); scanCv.height = Math.round(sh * k);
+    scanCv.getContext("2d", { willReadFrequently: true }).drawImage(video, sx, sy, sw, sh, 0, 0, scanCv.width, scanCv.height);
+    let achados = [];
+    try { achados = await leitor.detect(scanCv); } catch (e) { return null; }
+    const r = analisarCodigos(achados, scanCv.width, scanCv.height);
+    r.crop = { x: vw * (1 - F) / 2, y: vh * (1 - F) / 2, w: vw * F, h: vh * F };
+    return r;
+  }
+
+  // Nome do produto a partir do código: 1) memória deste celular, 2) preços já registrados,
+  // 3) base colaborativa, 4) Open Food Facts (base aberta e gratuita de produtos).
+  const EAN_KEY = "prateleira-ean-v1";
+  function eanGet(ean) { try { return (JSON.parse(localStorage.getItem(EAN_KEY) || "{}"))[ean] || null; } catch (e) { return null; } }
+  function eanPut(ean, v) {
+    if (!ean || !v || !v.produto) return;
+    try {
+      const all = JSON.parse(localStorage.getItem(EAN_KEY) || "{}");
+      all[ean] = { produto: String(v.produto).slice(0, 200), marca: v.marca || "", versao: v.versao || "", tamanho: v.tamanho || "", fonte: v.fonte || "", t: Date.now() };
+      const ks = Object.keys(all);
+      if (ks.length > 600) ks.sort((a, b) => all[a].t - all[b].t).slice(0, ks.length - 600).forEach((x) => delete all[x]);
+      localStorage.setItem(EAN_KEY, JSON.stringify(all));
+    } catch (e) {}
+  }
+  async function nomePorEan(ean) {
+    const c = eanGet(ean);
+    if (c) return c;
+    const reg = lerPrecos().slice().reverse().find((p) => p.ean === ean);
+    if (reg) return { produto: reg.produto, marca: reg.marca, versao: reg.versao, tamanho: reg.tamanho, fonte: "seus registros" };
+    if (baseOn()) {
+      try {
+        const l = await buscarNuvem(ean, "ean");
+        if (l.length) { const p = l[l.length - 1]; const v = { produto: p.produto, marca: p.marca, versao: p.versao, tamanho: p.tamanho, fonte: "base colaborativa" }; eanPut(ean, v); return v; }
+      } catch (e) {}
+    }
+    try {
+      const ctl = new AbortController();
+      const tm = setTimeout(() => ctl.abort(), 4000);
+      const res = await fetch("https://world.openfoodfacts.org/api/v2/product/" + ean + ".json?fields=product_name,product_name_pt,brands,quantity", { signal: ctl.signal });
+      clearTimeout(tm);
+      if (res.ok) {
+        const d = await res.json();
+        const p = d.product || {};
+        const nome = String(p.product_name_pt || p.product_name || "").trim();
+        if (d.status === 1 && nome) {
+          const marca = String(p.brands || "").split(",")[0].trim();
+          const tam = String(p.quantity || "").trim();
+          const partes = [nome];
+          if (marca && !plain(nome).includes(plain(marca))) partes.push(marca);
+          if (tam && !plain(nome).replace(/\s/g, "").includes(plain(tam).replace(/\s/g, ""))) partes.push(tam);
+          const v = { produto: partes.join(" "), marca, versao: "", tamanho: tam, fonte: "Open Food Facts" };
+          eanPut(ean, v);
+          return v;
+        }
+      }
+    } catch (e) {}
+    return null;
+  }
+
   // ---------- IA do Google (Gemini, nível gratuito) ----------
   const API = "https://generativelanguage.googleapis.com/v1beta";
   const PREFER = {
@@ -489,9 +831,10 @@ body.card-on #confirm { visibility: hidden; }
     return list.concat(extra);
   }
 
-  function prompt(ultimo) {
+  function prompt(ultimo, dica) {
     return [
       "Você vê um quadro da câmera de um celular dentro de um supermercado no Brasil.",
+      dica && dica.ean ? "O código de barras lido nesta imagem é " + dica.ean + (dica.nome ? ', que corresponde ao produto "' + String(dica.nome).slice(0, 160) + '": use esse nome no campo produto (complete o tamanho se estiver visível)' : ": identifique o produto que tem esse código") + "." : "",
       "Olhe primeiro para o centro da imagem, que é para onde a pessoa está apontando.",
       "O produto pode estar distante e pequeno na imagem: examine com atenção logotipos, cores, formato da embalagem e textos pequenos antes de responder. Se o nome for reconhecível mas o tamanho não, informe o produto e deixe o tamanho vazio.",
       ultimo ? 'O último produto identificado foi: "' + String(ultimo).slice(0, 160) + '".' : "Nenhum produto foi identificado antes.",
@@ -508,7 +851,7 @@ body.card-on #confirm { visibility: hidden; }
       "- Produto pesado na loja (etiqueta de balança com PESO): use esse peso como tamanho (ex.: 0,254 kg).",
       "- corresponde_ao_ultimo: true só se a etiqueta for claramente do último produto identificado.",
       "- box_2d: caixa do produto, coordenadas inteiras de 0 a 1000, na ordem [ymin, xmin, ymax, xmax]."
-    ].join("\n");
+    ].filter(Boolean).join("\n");
   }
 
   function parseJSON(t) {
@@ -517,13 +860,13 @@ body.card-on #confirm { visibility: hidden; }
     try { return JSON.parse(t.slice(a, b + 1)); } catch (e) { return null; }
   }
 
-  async function askGemini(imageB64, signal) {
+  async function askGemini(imageB64, signal, dica) {
     await loadModels();
     const tries = pickModels();
     if (!tries.length) throw { kind: "net" };
     const contents = [{ role: "user", parts: [
       { inline_data: { mime_type: "image/jpeg", data: imageB64 } },
-      { text: prompt(last ? last.produto : null) }
+      { text: prompt(last ? last.produto : null, dica) }
     ] }];
     const makeBody = (withThink) => {
       const cfg = { responseMimeType: "application/json", temperature: 0.1, maxOutputTokens: 1500 };
@@ -571,16 +914,46 @@ body.card-on #confirm { visibility: hidden; }
   }
 
   // ---------- Consulta à IA ----------
+  // Ordem: 1) código de barras (exato, grátis, no celular); 2) se não houver código visível,
+  // a IA identifica pela aparência e o app avisa que é preciso conferir.
+  let avisouCupom = 0;
   async function identify() {
     busy = true;
     lastCall = Date.now();
     reticle.className = "busy";
-    hint.textContent = "Identificando…";
+    hint.textContent = "Procurando código de barras…";
     const t0 = performance.now();
+    let cod = null;
+    try { cod = await lerCodigo(); } catch (e) {}
+    if (cod && cod.nfce && Date.now() - avisouCupom > 15000) {
+      avisouCupom = Date.now();
+      toast("Este é o QR code de um cupom fiscal. Para importar os preços da nota, use “Ler cupom fiscal” no início.", 6000);
+    }
+    const ean = cod && cod.ean;
+    let info = null;
+    if (ean) {
+      hint.textContent = "Código " + ean + " lido…";
+      const mesmo = last && last.ean === ean;
+      info = mesmo ? { produto: last.produto, marca: last.marca, versao: last.versao, tamanho: last.tamanho, fonte: last.fonte_nome } : await nomePorEan(ean);
+      if (info) {
+        lastCrop = cod.crop;
+        const r = Object.assign({ tipo: "produto", confianca: "alta", via: "codigo", ean, caixa: cod.caixa, fonte_nome: info.fonte || "" }, info);
+        handleResult(r, performance.now() - t0);
+        // O nome veio do código. A IA só é chamada para ler o preço da etiqueta, se ainda não foi lido aqui.
+        if (!(last && last.ean === ean && last.preco_etiqueta > 0)) lerPrecoComDica(ean, info.produto);
+        busy = false; needMove = true; reticle.className = "hide"; hint.textContent = "Mova para outro produto";
+        return;
+      }
+    }
+    hint.textContent = ean ? "Código " + ean + " lido. Identificando a embalagem…" : "Identificando pela aparência…";
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 30000);
     try {
-      const data = await askGemini(grabFrame(), ctl.signal);
+      const data = await askGemini(grabFrame(), ctl.signal, ean ? { ean } : null);
+      if (data && data.tipo === "produto" && data.produto) {
+        data.via = ean ? "codigo" : "aparencia";
+        if (ean) { data.ean = ean; data.fonte_nome = "IA, a partir do código"; if (data.confianca !== "baixa") eanPut(ean, { produto: data.produto, marca: data.marca, versao: data.versao, tamanho: data.tamanho, fonte: "IA (embalagem)" }); }
+      }
       handleResult(data, performance.now() - t0);
     } catch (e) {
       if (e && e.kind === "key") { askCode("A chave não foi aceita pelo Google. Confira e cole de novo."); return; }
@@ -620,7 +993,8 @@ body.card-on #confirm { visibility: hidden; }
     } else if (!String(r.produto).toLowerCase().replace(/\s/g, "").includes(tam.toLowerCase().replace(/\s/g, ""))) {
       r.produto = String(r.produto).trim() + " " + tam;
     }
-    const same = !!(last && last.produto === r.produto);
+    const same = !!(last && ((r.ean && last.ean === r.ean) || last.produto === r.produto));
+    if (same && r.ean && last.ean === r.ean) { r.produto = last.produto; r.marca = last.marca; r.tamanho = last.tamanho; r.via = last.via; r.fonte_nome = last.fonte_nome; }
     if (r.preco_etiqueta > 0) r.preco_lido = r.preco_etiqueta;
     if (same && !r.preco_etiqueta && last.preco_etiqueta) { r.preco_etiqueta = last.preco_etiqueta; r.preco_lido = last.preco_lido; }
     if (same && last.preco_confirmado) { r.preco_etiqueta = last.preco_etiqueta; r.preco_lido = last.preco_lido; r.preco_confirmado = true; }
@@ -637,6 +1011,49 @@ body.card-on #confirm { visibility: hidden; }
       tickFromList(r);
       consultarPrecos(r);
     }
+  }
+
+  // Produto já identificado pelo código: a IA lê só o preço da etiqueta, em segundo plano.
+  async function lerPrecoComDica(ean, nome) {
+    if (!code) return;
+    const img = grabFrame();
+    const ctl = new AbortController();
+    const tm = setTimeout(() => ctl.abort(), 25000);
+    try {
+      const d = await askGemini(img, ctl.signal, { ean, nome });
+      if (!last || last.ean !== ean || !d) return;
+      if (d.caixa) showBox(d.caixa);
+      const p = d.tipo === "produto" ? d.preco_etiqueta : d.tipo === "etiqueta" ? d.preco : null;
+      if (!last.tamanho && d.tamanho) last.tamanho = String(d.tamanho);
+      if (p > 0 && !last.preco_confirmado) {
+        last.preco_etiqueta = p; last.preco_lido = p;
+        marcarPendente(last);
+        renderCard(last, lastMs, "Preço local lido da etiqueta.", true);
+        askPrice(last);
+      }
+    } catch (e) {} finally { clearTimeout(tm); }
+  }
+
+  // "Não é este produto": a pessoa escreve o nome certo. Se havia código de barras,
+  // o nome corrigido fica guardado para esse código e vale nas próximas leituras.
+  function corrigirProduto(r) {
+    if (!r) return;
+    editing = true;
+    const v = window.prompt("Qual é o produto? Escreva nome, marca e tamanho (ex.: Café Pilão Tradicional 500 g)", r.produto || "");
+    editing = false;
+    pauseUntil = Date.now() + 1500;
+    if (!v || !v.trim()) return;
+    const tm = /(\d+(?:[.,]\d+)?)\s*(kg|g|gr|ml|l|lt|litros?)\b/i.exec(v);
+    r.produto = v.trim().slice(0, 200);
+    r.marca = ""; r.versao = ""; r.tamanho = tm ? tm[0] : "";
+    r.confianca = "alta"; r.motivo_duvida = "";
+    if (r.ean) { eanPut(r.ean, { produto: r.produto, tamanho: r.tamanho, fonte: "corrigido por você" }); r.fonte_nome = "corrigido por você"; }
+    else r.via = "usuario";
+    r._nuvem = null;
+    consultarPrecos(r);
+    tickFromList(r);
+    renderCard(r, lastMs);
+    toast("Produto corrigido. Buscando os preços de novo…");
   }
 
   // ---------- Bip, vibração e destaque ao fixar o produto ----------
@@ -741,10 +1158,10 @@ body.card-on #confirm { visibility: hidden; }
     // Os dois mercados próximos aparecem sempre, com preço quando houver (usuários primeiro, depois internet).
     const prox = vizinhos.map((v) => {
       const u = outros.find((p) => p.id === v.id);
-      if (u) return { loja: v.nome, dist: v.dist, val: u.val, fonte: "usuários", t: u.t };
+      if (u) return { loja: v.nome, dist: v.dist, lat: v.lat, lon: v.lon, val: u.val, fonte: "usuários", t: u.t };
       const w = r._web && r._web.mercados && r._web.mercados[norm(v.nome)];
-      if (w > 0) return { loja: v.nome, dist: v.dist, val: w, fonte: "internet", web: true };
-      return { loja: v.nome, dist: v.dist, val: null };
+      if (w > 0) return { loja: v.nome, dist: v.dist, lat: v.lat, lon: v.lon, val: w, fonte: "internet", web: true };
+      return { loja: v.nome, dist: v.dist, lat: v.lat, lon: v.lon, val: null };
     });
     const idsProx = new Set(vizinhos.map((v) => v.id));
     const outrosSemProx = outros.filter((p) => !idsProx.has(p.id));
@@ -756,8 +1173,31 @@ body.card-on #confirm { visibility: hidden; }
     return s.length > 14 ? s.slice(0, 13) + "…" : s;
   }
   function haDias(t) {
-    const d = Math.floor((Date.now() - t) / 864e5);
-    return d <= 0 ? "hoje" : d === 1 ? "ontem" : "há " + d + " dias";
+    const m = Math.floor((Date.now() - t) / 60000);
+    if (!(m >= 0)) return "";
+    if (m < 60) return m <= 1 ? "agora" : "há " + m + " min";
+    const h = Math.floor(m / 60);
+    if (h < 24) return "há " + h + " h";
+    const d = Math.floor(h / 24);
+    return d === 1 ? "ontem" : "há " + d + " dias";
+  }
+  // Preço por kg ou por litro, para comparar embalagens de tamanhos diferentes.
+  function porUnidade(preco, tam) {
+    const t = tamanhoN(tam);
+    if (!(preco > 0) || !t) return "";
+    const v = parseFloat(t), u = t.replace(/[\d.]/g, "");
+    if (!(v > 0)) return "";
+    const por = preco / v * 1000;
+    return fmt(por) + (u === "g" ? "/kg" : "/L");
+  }
+  // Link para traçar a rota até o mercado no app de mapas do celular.
+  function rotaUrl(lat, lon) { return "https://www.google.com/maps/dir/?api=1&destination=" + lat + "," + lon; }
+  function navLink(p, cls) {
+    const a = el("a", cls || "go", "Ir ›");
+    a.href = rotaUrl(p.lat, p.lon); a.target = "_blank"; a.rel = "noopener";
+    a.setAttribute("aria-label", "Rota até " + (p.loja || p.nome || "o mercado"));
+    a.addEventListener("click", (e) => e.stopPropagation());
+    return a;
   }
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
 
@@ -765,13 +1205,24 @@ body.card-on #confirm { visibility: hidden; }
     const conf = ["alta", "media", "baixa"].includes(r.confianca) ? r.confianca : "baixa";
     const tag = el("div", "tag");
     const head = el("div", "head");
-    head.append(el("span", "chip " + conf, conf === "alta" ? "certeza alta" : conf === "media" ? "confirme" : "incerto"),
+    const viaTxt = r.via === "codigo" ? "pelo código de barras" : r.via === "usuario" ? "informado por você" : conf === "alta" ? "pela aparência" : "pela aparência · confira";
+    head.append(el("span", "chip " + (r.via === "codigo" || r.via === "usuario" ? "cod" : "apar"), viaTxt),
                 el("span", "small", (ms / 1000).toFixed(1).replace(".", ",") + " s" + (r.modelo ? " · " + r.modelo.replace("gemini-", "") : "")));
     tag.append(head, el("h2", "", r.produto));
-    if (conf !== "alta" && r.motivo_duvida) tag.append(el("div", "ask", "Confira: " + r.motivo_duvida));
+    if (r.ean) tag.append(el("span", "small", "Código " + r.ean + (r.fonte_nome ? " · nome: " + r.fonte_nome : "")));
+    if (r.via === "aparencia") tag.append(el("div", "ask", "Identificado pelas características da embalagem (sem código de barras visível)." + (conf !== "alta" && r.motivo_duvida ? " Confira: " + r.motivo_duvida : "")));
+    else if (conf !== "alta" && r.motivo_duvida) tag.append(el("div", "ask", "Confira: " + r.motivo_duvida));
+    const acts = el("div", "acts2");
+    const bNao = el("button", "linkb", r.via === "codigo" ? "Corrigir nome" : "Não é este produto");
+    bNao.type = "button";
+    bNao.addEventListener("click", (e) => { e.stopPropagation(); corrigirProduto(r); });
+    acts.append(bNao);
+    tag.append(acts);
     const here = el("div", "here");
     if (r.preco_etiqueta > 0) {
       here.append(document.createTextNode("Aqui: "), el("strong", "", fmt(r.preco_etiqueta)));
+      const ua = porUnidade(r.preco_etiqueta, r.tamanho || r.produto);
+      if (ua) here.append(el("span", "unit", "  (" + ua + ")"));
       if (r.preco_confirmado) here.append(el("span", "small", "  confirmado e salvo"));
       else if (note) here.append(el("span", "small", "  " + note));
     } else {
@@ -779,6 +1230,13 @@ body.card-on #confirm { visibility: hidden; }
     }
     tag.append(here);
     const of = ofertas(r);
+    const outrosVals = of.prox.filter((p) => p.val != null).map((p) => p.val).concat(of.outros.map((p) => p.val), of.web.map((p) => p.val));
+    if (r.preco_etiqueta > 0 && outrosVals.length >= 2) {
+      const med = outrosVals.reduce((a, b) => a + b, 0) / outrosVals.length;
+      const d = Math.round((r.preco_etiqueta / med - 1) * 100);
+      tag.append(el("div", "media", d < 0 ? "Aqui está " + (-d) + "% abaixo da média dos outros preços (" + fmt(med) + ")."
+        : d > 0 ? "Aqui está " + d + "% acima da média dos outros preços (" + fmt(med) + ")." : "Aqui está na média dos outros preços."));
+    }
     const linha = (p, i, src) => {
       const row = el("div", "price");
       const mid = el("span", "val", fmt(p.val));
@@ -786,7 +1244,9 @@ body.card-on #confirm { visibility: hidden; }
         const d = Math.round((1 - p.val / r.preco_etiqueta) * 100);
         mid.append(el("span", "less", d > 0 ? "  " + d + "% menos" : d < 0 ? "  " + (-d) + "% mais" : "  igual"));
       }
-      row.append(el("span", "rank", (i + 1) + "º"), mid, el("span", "src", src));
+      const sEl = el("span", "src", src);
+      if (p.lat != null && p.lon != null) sEl.append(navLink(p));
+      row.append(el("span", "rank", (i + 1) + "º"), mid, sEl);
       return row;
     };
     const w = r._web || {};
@@ -797,7 +1257,9 @@ body.card-on #confirm { visibility: hidden; }
       if (p.val != null) l0.append(linha(p, i, p.loja + " · " + km(p.dist) + " · " + (p.web ? "internet" : "usuários, " + haDias(p.t))));
       else {
         const row = el("div", "price");
-        row.append(el("span", "rank", (i + 1) + "º"), el("span", "val none", w.estado === "buscando" ? "buscando…" : "sem preço ainda"), el("span", "src", p.loja + " · " + km(p.dist)));
+        const sEl = el("span", "src", p.loja + " · " + km(p.dist));
+        if (p.lat != null && p.lon != null) sEl.append(navLink(p));
+        row.append(el("span", "rank", (i + 1) + "º"), el("span", "val none", w.estado === "buscando" ? "buscando…" : "sem preço ainda"), sEl);
         l0.append(row);
       }
     });
@@ -865,6 +1327,7 @@ body.card-on #confirm { visibility: hidden; }
     const buscando = r._web && r._web.estado === "buscando";
     tagf.textContent = "";
     if (conf !== "alta") tagf.append(el("span", "warn", "confirme"));
+    tagf.append(el("span", "via" + (r.via === "aparencia" ? " apar" : ""), r.via === "codigo" ? "▮▮ pelo código" : r.via === "usuario" ? "informado por você" : "pela aparência"));
     tagf.append(el("span", "nm", r.produto));
     linhas.forEach((p) => {
       const row = el("span", "row" + (p.web ? " web" : "") + (p.val == null ? " none" : ""));
@@ -1036,7 +1499,9 @@ body.card-on #confirm { visibility: hidden; }
     $("savedScreen").hidden = false;
     sheetOpen = true;
   }
-  $("savedClose").onclick = () => { $("savedScreen").hidden = true; sheetOpen = false; };
+  function fecharSalvos() { $("savedScreen").hidden = true; sheetOpen = false; }
+  $("savedClose").onclick = fecharSalvos;
+  $("savedBack").onclick = fecharSalvos;
 
   // ---------- Tela inicial ----------
   function stopCamera() {
@@ -1051,15 +1516,62 @@ body.card-on #confirm { visibility: hidden; }
     hideBox(); hideTag(); closeConfirm();
     $("tapStart").hidden = true;
   }
-  function showHome() {
-    stopCamera();
-    ["startScreen", "listScreen", "savedScreen"].forEach((id) => { $(id).hidden = true; });
-    $("homeScreen").hidden = false;
+  // ---------- Navegação entre as telas claras (barra de abas embaixo) ----------
+  function go(id) {
+    if (cameraOn) stopCamera();
+    LIGHT.concat(["startScreen", "savedScreen", "mktScreen"]).forEach((s) => { $(s).hidden = s !== id; });
+    sheetOpen = false;
+    document.body.classList.add("light");
+    $("tabbar").hidden = false;
+    document.querySelectorAll("#tabbar button").forEach((b) => b.setAttribute("aria-current", b.dataset.go === id ? "page" : "false"));
+    if (id === "homeScreen") renderHome();
+    if (id === "listScreen") renderList();
+    $(id).scrollTop = 0;
   }
+  function showHome() { go("homeScreen"); }
+  document.querySelectorAll("#tabbar button").forEach((b) => {
+    b.onclick = () => { if (b.dataset.go === "camera") startCamera(); else go(b.dataset.go); };
+  });
   $("goShelf").onclick = startCamera;
-  $("goList").onclick = () => { $("homeScreen").hidden = true; showList(); };
+  $("scanBtn").onclick = startCamera;
+  $("goList").onclick = () => go("listScreen");
+  $("goCupom").onclick = () => go("cupomScreen");
+  $("goMkt").onclick = () => { abrirMercado(); if (!perto.length) detectarMercado(true); };
+  $("homeSaved").onclick = showSaved;
   $("homeBtn").onclick = showHome;
   $("startHome").onclick = showHome;
+
+  // Tela inicial: atalhos de produtos comuns, buscas recentes e resumo dos registros.
+  const ATALHOS = ["Arroz 5 kg", "Feijão preto 1 kg", "Café 500 g", "Leite integral 1 L", "Óleo de soja 900 ml", "Açúcar 1 kg", "Papel higiênico", "Detergente"];
+  const RECENT_KEY = "prateleira-recentes-v1";
+  function lerRecentes() { try { const a = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function guardarRecente(q) {
+    const a = lerRecentes().filter((x) => norm(x) !== norm(q));
+    a.unshift(q);
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(a.slice(0, 8))); } catch (e) {}
+  }
+  function chipsDe(box, lista) {
+    box.textContent = "";
+    lista.forEach((t) => {
+      const b = el("button", "chipb", t); b.type = "button";
+      b.onclick = () => pesquisar(t);
+      box.append(b);
+    });
+  }
+  function renderHome() {
+    chipsDe($("quickChips"), ATALHOS);
+    const rc = lerRecentes();
+    $("recentBlock").hidden = !rc.length;
+    chipsDe($("recentChips"), rc);
+    const n = lerPrecos().length;
+    $("homeSavedInfo").textContent = n
+      ? n + (n === 1 ? " preço registrado" : " preços registrados") + " neste celular" + (baseOn() ? " (também enviados à base colaborativa)." : ".")
+      : "Nenhum preço registrado ainda. Use a câmera na prateleira ou leia um cupom fiscal.";
+  }
+  $("recentClear").onclick = () => { try { localStorage.removeItem(RECENT_KEY); } catch (e) {} renderHome(); };
+  $("homeSearch").addEventListener("submit", (e) => { e.preventDefault(); const q = $("homeSearchInput").value.trim(); if (q) pesquisar(q); });
+  $("searchForm").addEventListener("submit", (e) => { e.preventDefault(); const q = $("searchInput").value.trim(); if (q) pesquisar(q); });
+  $("searchBack").onclick = showHome;
 
   // ---------- Lista de compras ----------
   const LIST_KEY = "prateleira-lista-v1";
@@ -1067,7 +1579,6 @@ body.card-on #confirm { visibility: hidden; }
   try { shop = JSON.parse(localStorage.getItem(LIST_KEY) || "[]"); if (!Array.isArray(shop)) shop = []; } catch (e) { shop = []; }
   function saveList() { try { localStorage.setItem(LIST_KEY, JSON.stringify(shop)); } catch (e) {} }
 
-  function showList() { renderList(); $("listScreen").hidden = false; }
   function renderList() {
     const ul = $("shopList");
     ul.textContent = "";
@@ -1110,7 +1621,6 @@ body.card-on #confirm { visibility: hidden; }
   });
   $("clearDone").onclick = () => { shop = shop.filter((x) => !x.feito); saveList(); renderList(); };
   $("listShelf").onclick = startCamera;
-  $("listHome").onclick = showHome;
 
   // Risca da lista o item que acabou de ser reconhecido na prateleira.
   const plain = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -1247,7 +1757,7 @@ body.card-on #confirm { visibility: hidden; }
   const BASE = { projectId: "", apiKey: "" };
   const baseOn = () => !!(BASE.projectId && BASE.apiKey);
   const FS = () => "https://firestore.googleapis.com/v1/projects/" + BASE.projectId + "/databases/(default)/documents";
-  const APP_VER = "v14";
+  const APP_VER = "v15";
 
   const norm = (s) => plain(s).replace(/[^a-z0-9]+/g, " ").trim();
   function tamanhoN(s) {
@@ -1266,6 +1776,7 @@ body.card-on #confirm { visibility: hidden; }
 
   // Mesmo produto = mesmo tamanho, mesma marca e nomes bem parecidos.
   function mesmoProduto(r, p) {
+    if (r.ean && p.ean) return r.ean === p.ean;   // mesmo código de barras = mesmo produto
     const t1 = tamanhoN(r.tamanho || r.produto), t2 = p.tamanho_n || tamanhoN(p.tamanho || p.produto);
     if (!t1 || t1 !== t2) return false;
     const m1 = norm(r.marca), m2 = p.marca_n || norm(p.marca);
@@ -1303,14 +1814,15 @@ body.card-on #confirm { visibility: hidden; }
     r.preco_salvo = true;
   }
 
-  function registrar(r, preco, origem) {
+  function registrar(r, preco, origem, quando, merc) {
+    const mk = merc || mercado;
     const reg = {
       produto: String(r.produto || "").slice(0, 200), marca: r.marca || "", marca_n: norm(r.marca),
       versao: r.versao || "", tamanho: r.tamanho || "", tamanho_n: tamanhoN(r.tamanho || r.produto),
-      preco: preco, origem: origem,
-      mercado_id: mercado ? mercado.id : null, mercado_nome: mercado ? mercado.nome : null,
-      lat: mercado ? mercado.lat : null, lon: mercado ? mercado.lon : null,
-      data: new Date().toISOString(), app: APP_VER
+      preco: preco, origem: origem, ean: r.ean || "",
+      mercado_id: mk ? mk.id : null, mercado_nome: mk ? mk.nome : null,
+      lat: mk ? mk.lat : null, lon: mk ? mk.lon : null,
+      data: quando || new Date().toISOString(), app: APP_VER
     };
     const ok = salvarPreco(reg);
     if (!ok) return "Não consegui salvar neste celular.";
@@ -1478,7 +1990,12 @@ body.card-on #confirm { visibility: hidden; }
     const espera = Promise.race([vizPromise || Promise.resolve(), new Promise((ok) => setTimeout(ok, 6000))]);
     espera.then(() => buscarWeb(r)).catch((e) => ({ estado: "erro", detalhe: String(e && e.message || e).slice(0, 120) }))
       .then((w) => { r._web = w; refresh(r); });
-    if (baseOn() && norm(r.marca)) buscarNuvem(norm(r.marca)).then((l) => { r._nuvem = l; refresh(r); }).catch(() => {});
+    if (baseOn()) {
+      const qs = [];
+      if (r.ean) qs.push(buscarNuvem(r.ean, "ean").catch(() => []));
+      if (norm(r.marca)) qs.push(buscarNuvem(norm(r.marca)).catch(() => []));
+      if (qs.length) Promise.all(qs).then((ls) => { r._nuvem = [].concat(...ls); refresh(r); });
+    }
     refresh(r);
   }
 
@@ -1487,7 +2004,7 @@ body.card-on #confirm { visibility: hidden; }
   let vizEstado = "";            // buscando | ok | sem-local | vazio
   let vizRegiao = "";
   let vizPromise = null;
-  const VIZ_KEY = "prateleira-vizinhos-v1";
+  const VIZ_KEY = "prateleira-vizinhos-v2";
   let vizRodando = false;
   function carregarVizinhos(force) {
     if (vizRodando && !force) return vizPromise;   // já está buscando: aproveita a mesma busca
@@ -1504,7 +2021,7 @@ body.card-on #confirm { visibility: hidden; }
         ultimaPos = { lat, lon };
         lista = await mercadosPerto(lat, lon, 3000, true);
         if (lista.length < 3) lista = await mercadosPerto(lat, lon, 8000, true);
-        lista = lista.slice(0, 20).map((m) => ({ id: m.id, nome: m.nome, rede: m.rede, bairro: m.bairro, cidade: m.cidade, dist: m.dist }));
+        lista = lista.slice(0, 20).map((m) => ({ id: m.id, nome: m.nome, rede: m.rede, bairro: m.bairro, cidade: m.cidade, dist: m.dist, lat: r4(m.lat), lon: r4(m.lon) }));
         vizRegiao = await cidadeDe(lat, lon);
         try { localStorage.setItem(VIZ_KEY, JSON.stringify({ t: Date.now(), lista, regiao: vizRegiao })); } catch (e) {}
       } else vizRegiao = c.regiao || "";
@@ -1572,33 +2089,65 @@ body.card-on #confirm { visibility: hidden; }
     else { mostrarMercado(perto.length ? "Mercado: confirmar" : "Mercado: escolher"); if (force) toast(perto.length ? "Escolha o mercado na lista." : "Nenhum mercado encontrado aqui perto. Digite o nome."); }
     if (!$("mktScreen").hidden) listarMercados();
   }
+  // Mercados favoritos (estrela): têm prioridade na escolha dos 2 mercados para comparar.
+  const FAV_KEY = "prateleira-favoritos-v1";
+  function lerFavoritos() { try { const o = JSON.parse(localStorage.getItem(FAV_KEY) || "{}"); return o && typeof o === "object" ? o : {}; } catch (e) { return {}; } }
+  function alternarFavorito(m) {
+    const f = lerFavoritos();
+    if (f[m.id]) delete f[m.id];
+    else f[m.id] = { id: m.id, nome: m.nome, rede: m.rede || "", lat: r4(m.lat), lon: r4(m.lon) };
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(f)); } catch (e) {}
+    toast(f[m.id] ? "“" + m.nome + "” marcado como favorito." : "“" + m.nome + "” removido dos favoritos.");
+    try { localStorage.removeItem(VIZ_KEY); } catch (e) {}
+    if (cameraOn) carregarVizinhos(true);
+    listarMercados();
+  }
   function listarMercados() {
     const ul = $("mktList");
     ul.textContent = "";
-    perto.slice(0, 8).forEach((m) => {
+    const fav = lerFavoritos();
+    const ids = new Set(perto.slice(0, 10).map((m) => m.id));
+    const favFora = Object.values(fav).filter((m) => !ids.has(m.id)).map((m) => Object.assign({}, m, { dist: ultimaPos && m.lat != null ? distM(ultimaPos.lat, ultimaPos.lon, m.lat, m.lon) : null }));
+    const lista = perto.slice(0, 10).filter((m) => fav[m.id]).concat(favFora, perto.slice(0, 10).filter((m) => !fav[m.id]));
+    lista.forEach((m) => {
       const li = el("li");
-      const b = el("button");
+      const b = el("button", "pick");
       b.type = "button";
       b.setAttribute("aria-current", mercado && mercado.id === m.id ? "true" : "false");
-      b.append(el("span", "", m.nome), el("span", "km", m.dist < 1000 ? Math.round(m.dist) + " m" : (m.dist / 1000).toFixed(1).replace(".", ",") + " km"));
-      b.onclick = () => { definirMercado(m); fecharMercado(); };
-      li.append(b); ul.append(li);
+      const nm = el("span", "", m.nome);
+      if (mercado && mercado.id === m.id) nm.append(el("span", "sub", "você está aqui"));
+      b.append(nm, el("span", "km", m.dist == null ? "" : m.dist < 1000 ? Math.round(m.dist) + " m" : (m.dist / 1000).toFixed(1).replace(".", ",") + " km"));
+      b.onclick = () => usarMercado(m);
+      const st = el("button", "star", "★");
+      st.type = "button";
+      st.setAttribute("aria-pressed", fav[m.id] ? "true" : "false");
+      st.setAttribute("aria-label", (fav[m.id] ? "Tirar dos favoritos: " : "Marcar como favorito: ") + m.nome);
+      st.onclick = () => alternarFavorito(m);
+      li.append(b, st); ul.append(li);
     });
-    $("mktInfo").textContent = perto.length ? "Mercados encontrados perto de você:" : "Toque em Localizar de novo ou digite o nome do mercado.";
+    $("mktInfo").textContent = lista.length
+      ? "Toque no mercado onde você está. A estrela marca favoritos: eles têm prioridade nas comparações."
+      : "Toque em Localizar de novo ou digite o nome do mercado.";
+  }
+  // Escolha feita na tela de mercados: vale para o mercado atual ou, se aberta pelo cupom, para o cupom.
+  function usarMercado(m) {
+    if (escolhaPara) { const f = escolhaPara; escolhaPara = null; f(m); }
+    else definirMercado(m);
+    fecharMercado();
   }
   function abrirMercado() { sheetOpen = true; listarMercados(); $("mktScreen").hidden = false; }
-  function fecharMercado() { $("mktScreen").hidden = true; sheetOpen = false; }
+  function fecharMercado() { $("mktScreen").hidden = true; sheetOpen = false; escolhaPara = null; }
   $("mktBtn").onclick = abrirMercado;
   $("mktClose").onclick = fecharMercado;
+  $("mktBack").onclick = fecharMercado;
   $("mktLocate").onclick = () => { $("mktInfo").textContent = "Localizando…"; detectarMercado(true); };
   $("mktForm").addEventListener("submit", (e) => {
     e.preventDefault();
     const nome = $("mktInput").value.trim();
     if (!nome) return;
     const p = ultimaPos || {};
-    definirMercado({ id: "nome:" + norm(nome).replace(/ /g, "-") + (p.lat ? "@" + p.lat.toFixed(3) + "," + p.lon.toFixed(3) : ""), nome: nome.slice(0, 60), lat: p.lat, lon: p.lon });
     $("mktInput").value = "";
-    fecharMercado();
+    usarMercado({ id: "nome:" + norm(nome).replace(/ /g, "-") + (p.lat ? "@" + p.lat.toFixed(3) + "," + p.lon.toFixed(3) : ""), nome: nome.slice(0, 60), lat: p.lat, lon: p.lon });
   });
   mostrarMercado();
 
@@ -1628,7 +2177,9 @@ body.card-on #confirm { visibility: hidden; }
   }
   function escolherDois(lista) {
     const out = [], redes = new Set();
-    for (const m of lista) {
+    const fav = lerFavoritos();
+    const ord = lista.filter((m) => fav[m.id]).concat(lista.filter((m) => !fav[m.id]));
+    for (const m of ord) {
       const rede = redeDe(m);
       if (redes.has(rede)) continue;
       redes.add(rede); out.push(m);
@@ -1871,6 +2422,343 @@ body.card-on #confirm { visibility: hidden; }
     box.hidden = false;
   }
   try { const q = JSON.parse(localStorage.getItem(QUOTE_KEY) || "null"); if (q && q.colunas) mostrarCotacao(q); } catch (e) {}
+
+  // ======================================================================
+  // PESQUISA POR TEXTO (barra de busca da tela inicial)
+  // 1º preços registrados (câmera e cupons) neste celular e na base colaborativa;
+  // 2º preços achados na internet, inclusive nos 2 mercados próximos.
+  // ======================================================================
+  let buscaId = 0;
+  function itemRes(x, best) {
+    const li = el("li", "res" + (best ? " best" : ""));
+    li.append(el("span", "nm", x.produto));
+    const pr = el("span", "pr", fmt(x.val));
+    const u = porUnidade(x.val, x.produto);
+    if (u) pr.append(el("small", "", u));
+    li.append(pr);
+    const meta = [x.loja, x.dist != null ? (x.dist < 1000 ? Math.round(x.dist) + " m" : (x.dist / 1000).toFixed(1).replace(".", ",") + " km") : "", x.t ? haDias(x.t) : ""].filter(Boolean).join(" · ");
+    li.append(el("span", "meta", meta));
+    const acts = el("div", "acts");
+    acts.append(el("span", "pill" + (x.web ? " warn" : ""), x.fonte));
+    if (x.lat != null && x.lon != null) acts.append(navLink(x, "pill gray"));
+    li.append(acts);
+    return li;
+  }
+  async function pesquisar(q) {
+    q = String(q || "").trim().slice(0, 120);
+    if (!q) return;
+    guardarRecente(q);
+    go("searchScreen");
+    $("searchInput").value = q;
+    $("homeSearchInput").value = "";
+    const id = ++buscaId;
+    const ul = $("searchList");
+    const res = [];
+    const desenhar = (msg) => {
+      if (id !== buscaId) return;
+      ul.textContent = "";
+      $("searchSum").textContent = "";
+      res.sort((a, b) => a.val - b.val);
+      res.forEach((x, i) => ul.append(itemRes(x, i === 0 && res.length > 1)));
+      if (res.length) {
+        const m = res.reduce((a, b) => a + b.val, 0) / res.length;
+        const c = el("div", "sumcard");
+        c.append(el("span", "fine", "Menor preço encontrado"), el("span", "big", fmt(res[0].val)), el("span", "", res[0].loja + " · " + res[0].produto));
+        if (res.length >= 2) {
+          const d = Math.round((1 - res[0].val / m) * 100);
+          if (d > 0) c.append(el("span", "pill", d + "% abaixo da média de " + res.length + " preços (" + fmt(m) + ")"));
+        }
+        $("searchSum").append(c);
+      }
+      $("searchMsg").textContent = msg;
+    };
+    $("searchFine").textContent = "";
+    desenhar("Procurando nos preços registrados…");
+    // 1) registros de usuários
+    const ean = gtinOk(normGtin(q)) ? normGtin(q) : null;
+    let regs = lerPrecos();
+    if (baseOn()) {
+      const qs = ean ? [buscarNuvem(ean, "ean")] : tokens(q).slice(0, 2).map((w) => buscarNuvem(w, "marca_n"));
+      const extra = await Promise.all(qs.map((p) => p.catch(() => [])));
+      regs = regs.concat(...extra);
+    }
+    if (id !== buscaId) return;
+    const lim = Date.now() - 30 * 864e5;
+    const melhor = new Map();
+    regs.forEach((p) => {
+      const t = Date.parse(p.data);
+      if (!(p.preco > 0) || !(t > lim) || !p.mercado_id) return;
+      if (ean ? p.ean !== ean : !itemCombina(q, p)) return;
+      const k = p.mercado_id + "|" + norm(p.produto);
+      const at = melhor.get(k);
+      if (!at || t > at.t) melhor.set(k, { produto: p.produto, loja: p.mercado_nome || "Mercado", val: p.preco, t, lat: p.lat, lon: p.lon,
+        dist: ultimaPos && p.lat != null ? distM(ultimaPos.lat, ultimaPos.lon, p.lat, p.lon) : null,
+        fonte: /cupom/.test(p.origem || "") ? "cupom fiscal" : "registrado na prateleira" });
+    });
+    res.push(...melhor.values());
+    if (ean) { desenhar(res.length ? "" : "Nenhum preço registrado para o código " + ean + " nos últimos 30 dias."); return; }
+    // 2) internet (precisa da chave da IA)
+    if (!code) { desenhar(res.length ? "" : "Nenhum preço registrado. Para buscar na internet, cadastre a chave da IA."); return; }
+    desenhar((res.length ? "" : "Nenhum preço registrado ainda. ") + "Buscando na internet e nos mercados perto de você…");
+    try { await Promise.race([carregarVizinhos(false), new Promise((ok) => setTimeout(ok, 8000))]); } catch (e) {}
+    const r = { produto: q, marca: "", tamanho: "" };
+    let w = null;
+    try { w = await buscarWeb(r); } catch (e) { w = { estado: "erro" }; }
+    if (id !== buscaId) return;
+    vizinhos.forEach((v) => {
+      const p = w && w.mercados && w.mercados[norm(v.nome)];
+      if (p > 0) res.push({ produto: q, loja: v.nome, val: p, dist: v.dist, lat: v.lat, lon: v.lon, fonte: "internet", web: true });
+    });
+    ((w && w.ofertas) || []).forEach((o) => res.push({ produto: q, loja: o.loja, val: o.preco, fonte: "internet", web: true }));
+    const msg = !res.length
+      ? (w && w.estado === "limite" ? "Limite gratuito de buscas atingido por hoje. Tente amanhã." : "Nenhum preço encontrado. Tente incluir marca e tamanho (ex.: café Pilão 500 g).")
+      : "";
+    desenhar(msg);
+    if (w && w.fontes && w.fontes.length) {
+      const f = $("searchFine");
+      f.textContent = "Preços da internet vêm de busca automática e podem estar desatualizados. Fontes: ";
+      w.fontes.slice(0, 4).forEach((x, i) => { const a = el("a", "", x.titulo); a.href = x.url; a.target = "_blank"; a.rel = "noopener"; if (i) f.append(document.createTextNode(", ")); f.append(a); });
+    } else if (res.some((x) => x.web)) $("searchFine").textContent = "Preços da internet vêm de busca automática e podem estar desatualizados.";
+  }
+
+  // ======================================================================
+  // CUPOM FISCAL (NFC-e): o QR code dá a chave de acesso (CNPJ da loja e mês da compra,
+  // conferidos pelo dígito verificador); a IA lê os itens e preços da foto do cupom.
+  // ======================================================================
+  let cupomFotos = [];          // { b64, url, cv }
+  let cupomDados = null;
+  let cupomMercado = null;
+  let escolhaPara = null;       // quando a tela de mercados é aberta para escolher o mercado do cupom
+
+  function chaveValida(k) {
+    if (!/^\d{44}$/.test(k)) return false;
+    let soma = 0, peso = 2;
+    for (let i = 42; i >= 0; i--) { soma += Number(k[i]) * peso; peso = peso === 9 ? 2 : peso + 1; }
+    const r = soma % 11, dv = r < 2 ? 0 : 11 - r;
+    return dv === Number(k[43]);
+  }
+  function dadosDaChave(k) {
+    return { uf: k.slice(0, 2), ano: 2000 + Number(k.slice(2, 4)), mes: Number(k.slice(4, 6)), cnpj: k.slice(6, 20), modelo: k.slice(20, 22) };
+  }
+  const fmtCnpj = (c) => (/^\d{14}$/.test(c) ? c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5") : c || "");
+
+  function carregarImagem(file) {
+    return new Promise((ok, fail) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const k = Math.min(1, 2200 / Math.max(img.naturalWidth, img.naturalHeight));
+        const cv = document.createElement("canvas");
+        cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+        cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+        ok({ url, cv, b64: cv.toDataURL("image/jpeg", 0.85).split(",")[1] });
+      };
+      img.onerror = () => fail(new Error("imagem"));
+      img.src = url;
+    });
+  }
+  async function addFotosCupom(files) {
+    for (const f of Array.from(files || []).slice(0, 6)) {
+      try { cupomFotos.push(await carregarImagem(f)); } catch (e) { toast("Não consegui abrir uma das fotos."); }
+    }
+    cupomFotos = cupomFotos.slice(0, 6);
+    renderFotosCupom();
+  }
+  function renderFotosCupom() {
+    const box = $("cupomThumbs");
+    box.textContent = "";
+    cupomFotos.forEach((f, i) => { const im = el("img"); im.src = f.url; im.alt = "Foto " + (i + 1) + " do cupom"; box.append(im); });
+    $("cupomRead").hidden = !cupomFotos.length;
+    $("cupomReset").hidden = !cupomFotos.length && !cupomDados;
+    $("cupomRead").textContent = cupomFotos.length > 1 ? "Ler itens das " + cupomFotos.length + " fotos" : "Ler itens do cupom";
+  }
+  ["cupomCam", "cupomGal"].forEach((id) => $(id).addEventListener("change", (e) => { addFotosCupom(e.target.files); e.target.value = ""; }));
+  $("cupomReset").onclick = () => { cupomFotos = []; cupomDados = null; cupomMercado = null; $("cupomOut").textContent = ""; renderFotosCupom(); };
+  $("cupomRead").onclick = lerCupom;
+
+  // Chamada genérica à IA com resposta em JSON (usada na leitura do cupom).
+  async function geminiJSON(parts, maxTokens, preciso) {
+    await loadModels();
+    const avail = models || [];
+    let tries = (preciso ? PREFER.preciso : PREFER[mode]).filter((n) => avail.includes(n) && !blocked.has(n));
+    if (!tries.length) tries = pickModels();
+    let lastErr = { kind: "net" };
+    for (const name of tries.slice(0, 3)) {
+      let res;
+      try {
+        res = await fetch(API + "/models/" + name + ":generateContent", {
+          method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": code },
+          body: JSON.stringify({ contents: [{ role: "user", parts }], generationConfig: { responseMimeType: "application/json", temperature: 0.1, maxOutputTokens: maxTokens } })
+        });
+      } catch (e) { continue; }
+      if (res.status === 401 || res.status === 403) throw { kind: "key" };
+      if (res.status === 429) { blocked.add(name); lastErr = { kind: "limit" }; continue; }
+      if (!res.ok) { if (res.status === 404) blocked.add(name); continue; }
+      const d = await res.json();
+      const p = (((d.candidates || [])[0] || {}).content || {}).parts || [];
+      const j = parseJSON(p.filter((x) => !x.thought).map((x) => x.text || "").join(""));
+      if (j) { j._modelo = name; return j; }
+      lastErr = { kind: "format" };
+    }
+    throw lastErr;
+  }
+
+  async function lojaPorCnpj(cnpj) {
+    if (!/^\d{14}$/.test(cnpj)) return null;
+    try {
+      const ctl = new AbortController();
+      const tm = setTimeout(() => ctl.abort(), 5000);
+      const res = await fetch("https://brasilapi.com.br/api/cnpj/v1/" + cnpj, { signal: ctl.signal });
+      clearTimeout(tm);
+      if (!res.ok) return null;
+      const d = await res.json();
+      return { nome: String(d.nome_fantasia || d.razao_social || "").trim(), cidade: String(d.municipio || "").trim() };
+    } catch (e) { return null; }
+  }
+
+  // Liga o cupom a um mercado do mapa (mesmo identificador usado pela câmera), pelo nome, até 10 km.
+  const GENERICOS = new Set(["supermercado", "supermercados", "mercado", "mercados", "comercio", "alimentos", "ltda", "eireli", "filial", "loja", "hiper", "atacado", "atacadista", "distribuidora", "cia", "comercial", "varejo", "brasil"]);
+  const tokLoja = (s) => norm(s).split(" ").filter((w) => w.length > 2 && !GENERICOS.has(w));
+  async function mercadoDoCupom(nome, cnpj) {
+    const a = new Set(tokLoja(nome));
+    const combina = (m) => a.size && tokLoja((m.nome || "") + " " + (m.rede || "")).some((w) => a.has(w));
+    if (mercado && combina(mercado)) return mercado;
+    const pos = ultimaPos ? { coords: { latitude: ultimaPos.lat, longitude: ultimaPos.lon } } : await pegarPosicao();
+    if (pos && a.size) {
+      ultimaPos = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      const lista = await mercadosPerto(ultimaPos.lat, ultimaPos.lon, 10000, true);
+      const m = lista.filter(combina).sort((x, y) => x.dist - y.dist)[0];
+      if (m) return { id: m.id, nome: m.nome, lat: r4(m.lat), lon: r4(m.lon), rede: m.rede };
+    }
+    return { id: cnpj ? "cnpj:" + cnpj : "nome:" + norm(nome).replace(/ /g, "-"), nome: String(nome || "Mercado do cupom").slice(0, 60), lat: null, lon: null };
+  }
+
+  function cupomMsg(t) { const o = $("cupomOut"); o.textContent = ""; o.append(el("p", "muted", t)); }
+
+  async function lerCupom() {
+    if (!cupomFotos.length) return;
+    if (!code) { askCode("Para ler o cupom, cole a chave do Google AI Studio."); return; }
+    const btn = $("cupomRead");
+    btn.disabled = true;
+    try {
+      cupomMsg("Procurando o QR code da nota…");
+      let chave = null, url = "";
+      try {
+        await Promise.race([prepararLeitor(), new Promise((ok) => setTimeout(ok, 6000))]);
+        if (leitor) for (const f of cupomFotos) {
+          const a = analisarCodigos(await leitor.detect(f.cv).catch(() => []), 0, 0);
+          if (a.nfce && chaveValida(a.nfce.chave)) { chave = a.nfce.chave; url = a.nfce.url; break; }
+        }
+      } catch (e) {}
+      cupomMsg("Lendo os itens do cupom com a IA… pode levar até 1 minuto.");
+      const instr = [
+        "Estas fotos são de um cupom fiscal eletrônico (NFC-e) de um supermercado no Brasil, em ordem, de cima para baixo. Extraia os dados sem inventar nada que não esteja legível.",
+        'Responda só com JSON: {"loja":"nome do emitente como impresso","cnpj":"só números","data":"AAAA-MM-DD","total":123.45,"itens":[{"codigo":"código do item como impresso","descricao":"texto do item como impresso","nome":"nome claro do produto","marca":"","tamanho":"ex.: 1 kg","qtd":1,"unidade":"UN","preco_unit":9.99,"total":9.99}]}',
+        "Regras:",
+        "- nome: reescreva a descrição de forma clara, com acentos, marca e tamanho por extenso quando estiverem no texto (ex.: FEIJAO PRETO CAMIL 1KG -> Feijão Preto Camil 1 kg). Não acrescente marca ou tamanho que não estejam no texto.",
+        "- preco_unit: valor unitário cobrado; se a própria linha do item tiver desconto, use o valor unitário já com o desconto.",
+        "- unidade: UN, KG, L etc., como impresso. Em item vendido por peso (KG), preco_unit é o preço do quilo.",
+        "- Fotos sobrepostas: liste cada item uma vez só. Item ilegível: não liste.",
+        "- total: valor total pago da nota (número). data: data de emissão."
+      ].join("\n");
+      const parts = cupomFotos.map((f) => ({ inline_data: { mime_type: "image/jpeg", data: f.b64 } }));
+      parts.push({ text: instr });
+      let j;
+      try { j = await geminiJSON(parts, 8192, true); }
+      catch (e) {
+        if (e && e.kind === "key") { askCode("A chave não foi aceita pelo Google. Confira e cole de novo."); return; }
+        cupomMsg(e && e.kind === "limit" ? "Limite gratuito da IA atingido por agora. Espere um pouco e tente de novo." : "Não consegui ler o cupom. Tente fotos mais nítidas, com o cupom esticado e bem iluminado.");
+        return;
+      }
+      const num = (x) => (typeof x === "string" ? parseFloat(x.replace(/[^\d,.-]/g, "").replace(",", ".")) : Number(x));
+      const itens = (Array.isArray(j.itens) ? j.itens : []).map((x) => {
+        const codigo = String(x.codigo || "").replace(/\D/g, "");
+        const g = normGtin(codigo);
+        return {
+          codigo, descricao: String(x.descricao || "").slice(0, 120), nome: String(x.nome || x.descricao || "").trim().slice(0, 160),
+          marca: String(x.marca || ""), tamanho: String(x.tamanho || ""), qtd: num(x.qtd) || 1,
+          unidade: String(x.unidade || "UN").toUpperCase().slice(0, 4), preco: num(x.preco_unit), total: num(x.total),
+          ean: gtinOk(g) && !gtinInterno(g) ? g : ""
+        };
+      }).filter((x) => x.nome && x.preco > 0 && x.preco < 10000);
+      if (!itens.length) { cupomMsg("Não encontrei itens com preço nas fotos. Fotografe o cupom mais de perto, por partes."); return; }
+      // Loja e data: a chave do QR code (conferida pelo dígito verificador) prevalece sobre a leitura da IA.
+      const dk = chave ? dadosDaChave(chave) : null;
+      const cnpj = dk ? dk.cnpj : String(j.cnpj || "").replace(/\D/g, "").slice(0, 14);
+      let nomeLoja = String(j.loja || "").trim();
+      const oficial = await lojaPorCnpj(cnpj);
+      if (oficial && oficial.nome) nomeLoja = oficial.nome;
+      let data = /^\d{4}-\d{2}-\d{2}$/.test(String(j.data || "")) ? String(j.data) : "";
+      let obsData = "";
+      if (dk && data && (Number(data.slice(0, 4)) !== dk.ano || Number(data.slice(5, 7)) !== dk.mes)) { data = ""; obsData = "data lida não confere com a chave da nota"; }
+      if (!data && dk) { data = dk.ano + "-" + String(dk.mes).padStart(2, "0") + "-01"; obsData = obsData || "dia não lido; usado o mês da chave da nota"; }
+      let quando = data ? new Date(data + "T12:00:00") : new Date();
+      if (!(quando.getTime() <= Date.now())) quando = new Date();
+      cupomMsg("Localizando o mercado do cupom…");
+      cupomMercado = await mercadoDoCupom(nomeLoja, cnpj);
+      cupomDados = { chave, url, cnpj, nomeLoja, data: quando.toISOString(), obsData, total: num(j.total), itens, modelo: j._modelo };
+      mostrarCupom();
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function mostrarCupom() {
+    const c = cupomDados, o = $("cupomOut");
+    if (!c) return;
+    o.textContent = "";
+    const card = el("div", "sumcard");
+    card.append(el("b", "", c.nomeLoja || "Loja não identificada"));
+    card.append(el("span", "fine", [c.cnpj ? "CNPJ " + fmtCnpj(c.cnpj) : "", "compra em " + new Date(c.data).toLocaleDateString("pt-BR") + (c.obsData ? " (" + c.obsData + ")" : ""), c.chave ? "QR code lido e conferido" : "QR code não lido"].filter(Boolean).join(" · ")));
+    const mk = el("div", "rowlink");
+    mk.append(el("span", "", "Mercado na base: " + (cupomMercado ? cupomMercado.nome : "-") + (cupomMercado && cupomMercado.lat == null ? " (sem localização)" : "")));
+    const tr = el("button", "", "Trocar"); tr.type = "button";
+    tr.onclick = () => { escolhaPara = (m) => { cupomMercado = { id: m.id, nome: m.nome, lat: r4(m.lat), lon: r4(m.lon) }; mostrarCupom(); }; abrirMercado(); if (!perto.length) detectarMercado(false); };
+    mk.append(tr);
+    card.append(mk);
+    const soma = c.itens.reduce((a, x) => a + (x.total > 0 ? x.total : x.preco * x.qtd), 0);
+    if (c.total > 0) {
+      const dif = Math.abs(soma - c.total);
+      card.append(el("span", "pill" + (dif > Math.max(0.05, c.total * 0.02) ? " warn" : ""), "Soma dos itens " + fmt(soma) + " · total do cupom " + fmt(c.total) + (dif > Math.max(0.05, c.total * 0.02) ? " · confira se faltou alguma parte do cupom" : " · confere")));
+    }
+    if (c.url) { const a = el("a", "", "Ver a nota no site da Fazenda"); a.href = c.url; a.target = "_blank"; a.rel = "noopener"; card.append(a); }
+    o.append(card);
+    o.append(el("p", "muted", c.itens.length + (c.itens.length === 1 ? " item lido" : " itens lidos") + ". Desmarque o que estiver errado antes de salvar."));
+    const ul = el("ul", "cuplist");
+    c.itens.forEach((x) => {
+      const li = el("li");
+      const cb = el("input"); cb.type = "checkbox"; cb.checked = x.ok !== false;
+      cb.setAttribute("aria-label", "Salvar " + x.nome);
+      cb.onchange = () => { x.ok = cb.checked; botao(); };
+      const pr = el("span", "pr", fmt(x.preco));
+      pr.append(el("small", "", x.unidade === "KG" ? "por kg" : x.qtd > 1 ? x.qtd + " × " + fmt(x.preco) : ""));
+      li.append(cb, el("span", "nm", x.nome), pr, el("span", "raw", x.descricao + (x.ean ? " · código " + x.ean : "")));
+      ul.append(li);
+    });
+    o.append(ul);
+    const salvar = el("button", "btn"); salvar.type = "button";
+    const botao = () => { const n = c.itens.filter((x) => x.ok !== false).length; salvar.textContent = "Salvar " + n + (n === 1 ? " preço" : " preços") + " na base"; salvar.disabled = !n; };
+    botao();
+    salvar.onclick = () => salvarCupom(salvar);
+    o.append(salvar);
+    o.append(el("p", "fine", "Os nomes foram reescritos pela IA a partir do texto do cupom; o texto original aparece em cinza. Preços de cupom entram na base com a data da compra."));
+  }
+
+  function salvarCupom(btn) {
+    const c = cupomDados;
+    if (!c || !cupomMercado) return;
+    let n = 0;
+    c.itens.filter((x) => x.ok !== false).forEach((x) => {
+      const kg = x.unidade === "KG";
+      const r = { produto: kg ? x.nome + " (preço por kg)" : x.nome, marca: x.marca, versao: "", tamanho: kg ? "1 kg" : x.tamanho, ean: x.ean };
+      registrar(r, Math.round(x.preco * 100) / 100, "cupom fiscal (NFC-e)", c.data, cupomMercado);
+      if (x.ean && !kg) eanPut(x.ean, { produto: x.nome, marca: x.marca, tamanho: x.tamanho, fonte: "cupom fiscal" });
+      n++;
+    });
+    btn.disabled = true;
+    btn.textContent = n + (n === 1 ? " preço salvo" : " preços salvos");
+    toast(n + (n === 1 ? " preço do cupom salvo" : " preços do cupom salvos") + (baseOn() ? " e enviados à base." : " neste celular."), 4000);
+  }
 
   // ---------- Código de acesso ----------
   function askCode(msg) {
