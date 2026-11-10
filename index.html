@@ -385,7 +385,27 @@ body.card-on #confirm { visibility: hidden; }
 .tag .acts2 { display: flex; gap: 8px; flex-wrap: wrap; }
 .tag .unit { font-size: 12px; font-weight: 400; opacity: 0.8; }
 .tag .media { font-size: 13px; font-weight: 600; }
-.go { font-size: 12px; font-weight: 600; margin-left: 4px; }
+.go {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px; margin-left: 8px; vertical-align: middle;
+  min-height: 36px; min-width: 56px; padding: 6px 16px; border-radius: 999px; background: var(--pri); color: #fff !important;
+  font: 700 16px var(--font-body); text-decoration: none !important; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.22);
+}
+.go:active { transform: scale(0.96); }
+/* v18: mapas fixos na tela inicial e na lista */
+.mapa.fixo { height: 240px; position: relative; cursor: pointer; }
+.mapa .amp { position: absolute; right: 8px; bottom: 22px; z-index: 500; pointer-events: none; background: rgba(255,255,255,0.92); color: var(--tx); font: 600 12px var(--font-body); padding: 4px 10px; border-radius: 999px; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+.mklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.mklist li { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px 8px 12px; }
+.mklist .t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; cursor: pointer; }
+.mklist .t b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mklist .t small { font-size: 13px; color: var(--tx2); }
+.mklist .tot { font: 700 17px var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mklist .tot.best { color: var(--pri); }
+.mklist .go { margin-left: 0; }
+.pinp.mk .tg { background: #fff; color: var(--tx); border-color: var(--pri); font-size: 13px; }
+.pinp.mk .tg::after { border-top-color: var(--pri); }
+.pinp.mk.fav .tg { background: var(--pri); color: #fff; border-color: #fff; }
+.pinp.mk.fav .tg::after { border-top-color: #fff; }
 /* v17: ficha com mapa (Leaflet + OpenStreetMap) */
 #sheetBg { position: fixed; inset: 0; background: rgba(10,16,12,0.45); z-index: 30; }
 #sheet {
@@ -448,7 +468,7 @@ body.card-on #confirm { visibility: hidden; }
 <div class="top">
   <div class="lt">
     <button type="button" id="homeBtn" class="homeb" aria-label="Voltar ao início">‹ Início</button>
-    <span class="brand">Prateleira<span class="ver">v17</span></span>
+    <span class="brand">Prateleira<span class="ver">v18</span></span>
   </div>
   <div class="seg" role="group" aria-label="Modo da IA">
     <button type="button" id="mFast" aria-pressed="true">Rápido</button>
@@ -475,7 +495,7 @@ body.card-on #confirm { visibility: hidden; }
 
 <section class="screen" id="homeScreen" hidden>
   <header class="hd">
-    <div class="kick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Prateleira <span class="ver">v17</span></div>
+    <div class="kick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Prateleira <span class="ver">v18</span></div>
     <h1>Aponte. Compare. Economize.</h1>
   </header>
   <button type="button" class="hero" id="goShelf" aria-label="Consultar prateleira com a câmera">
@@ -496,6 +516,12 @@ body.card-on #confirm { visibility: hidden; }
       <span class="cta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Abrir câmera</span>
     </span>
   </button>
+  <section class="block" id="homeMapBlock">
+    <div class="rowlink"><h2>Mercados perto de você</h2><button type="button" id="homeMapMore">Ampliar mapa</button></div>
+    <div class="mapa fixo off" id="homeMap">Localizando mercados perto de você…</div>
+    <ul class="mklist" id="homeMkts"></ul>
+    <button type="button" class="ghostlink" id="homeMapRetry" hidden>Tentar localizar de novo</button>
+  </section>
   <section class="block">
     <h2>Mais formas de comparar</h2>
     <div class="rows">
@@ -1654,6 +1680,8 @@ body.card-on #confirm { visibility: hidden; }
     if (id === "homeScreen") renderHome();
     if (id === "listScreen") renderList();
     $(id).scrollTop = 0;
+    if (id === "homeScreen") setTimeout(() => mapaInicio(false), 0);
+    if (id === "listScreen" && desenharLista) setTimeout(desenharLista, 0);
   }
   function showHome() { go("homeScreen"); }
   document.querySelectorAll("#tabbar button").forEach((b) => {
@@ -1883,7 +1911,7 @@ body.card-on #confirm { visibility: hidden; }
   const BASE = { projectId: "", apiKey: "" };
   const baseOn = () => !!(BASE.projectId && BASE.apiKey);
   const FS = () => "https://firestore.googleapis.com/v1/projects/" + BASE.projectId + "/databases/(default)/documents";
-  const APP_VER = "v17";
+  const APP_VER = "v18";
 
   const norm = (s) => plain(s).replace(/[^a-z0-9]+/g, " ").trim();
   function tamanhoN(s) {
@@ -2026,6 +2054,14 @@ body.card-on #confirm { visibility: hidden; }
   // Pelo preço publicado pelo Google, a pesquisa só é gratuita nos modelos 2.5 Flash e 2.5 Flash-Lite
   // (até 500 buscas por dia somando os dois). Cada produto é buscado no máximo a cada 12 horas.
   const WEB_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+  // Traduz o erro do Google para algo que a pessoa entenda.
+  function explicarFalhas(falhas) {
+    const t = falhas.join("; ");
+    if (/no longer available|not available to new|not found for API version/i.test(t))
+      return "o Google não libera mais o Gemini 2.5 para chaves novas, e só ele tem a pesquisa Google gratuita; nos modelos atuais a pesquisa exige faturamento ativado na chave do Google";
+    if (/billing|free tier|not available for free/i.test(t)) return "a pesquisa Google deste modelo exige faturamento ativado na chave do Google";
+    return t;
+  }
   const webBlocked = new Set();
   const WEB_KEY = "prateleira-web-v2";
   try { localStorage.removeItem("prateleira-web-v1"); } catch (e) {}
@@ -2106,7 +2142,7 @@ body.card-on #confirm { visibility: hidden; }
       webCachePut(k, v);
       return v;
     }
-    return { estado: limite ? "limite" : "erro", detalhe: falhas.join("; ") };
+    return { estado: limite ? "limite" : "erro", detalhe: explicarFalhas(falhas) };
   }
 
   // Ao reconhecer um produto novo: busca preços da base e da internet em paralelo, sem travar a câmera.
@@ -2426,7 +2462,7 @@ body.card-on #confirm { visibility: hidden; }
       });
       return out;
     }
-    return { erro: limite ? "limite" : "falha", detalhe: falhas.join("; ") };
+    return { erro: limite ? "limite" : "falha", detalhe: explicarFalhas(falhas) };
   }
 
   function quoteMsg(t) {
@@ -2471,7 +2507,7 @@ body.card-on #confirm { visibility: hidden; }
         precos.forEach((p, i) => { if (p) p.qtd = pad[i].qtd || 1; });
         return { m, precos, erro: web.erro || "", detalhe: web.detalhe || "" };
       }));
-      const res = { quando: Date.now(), itens, pad, colunas: colunas.map((c) => ({ nome: c.m.nome, dist: c.m.dist, precos: c.precos, erro: c.erro, detalhe: c.detalhe })) };
+      const res = { quando: Date.now(), itens, pad, colunas: colunas.map((c) => ({ id: c.m.id, nome: c.m.nome, dist: c.m.dist, lat: c.m.lat, lon: c.m.lon, precos: c.precos, erro: c.erro, detalhe: c.detalhe })) };
       try { localStorage.setItem(QUOTE_KEY, JSON.stringify(res)); } catch (e) {}
       mostrarCotacao(res);
     } finally {
@@ -2480,6 +2516,7 @@ body.card-on #confirm { visibility: hidden; }
   }
   $("quoteBtn").onclick = cotarLista;
 
+  let desenharLista = null;      // desenha o mapa da cotação quando a tela da lista estiver visível
   function mostrarCotacao(res) {
     const box = $("quoteBox");
     box.textContent = "";
@@ -2487,6 +2524,11 @@ body.card-on #confirm { visibility: hidden; }
     const custo = (p) => (p ? p.preco * (p.qtd || 1) : null);
     const quando = new Date(res.quando).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
     box.append(el("p", "fine", "Pesquisa de " + quando + " · " + res.colunas.map((c) => c.nome + " (" + (c.dist < 1000 ? Math.round(c.dist) + " m" : (c.dist / 1000).toFixed(1).replace(".", ",") + " km") + ")").join(" e ")));
+    const comLocal = res.colunas.some((c) => c.lat != null && c.lon != null);
+    const divMapa = comLocal ? el("div", "mapa fixo") : null;
+    const ulMk = el("ul", "mklist");
+    if (divMapa) box.append(divMapa);
+    box.append(ulMk);
     const tb = el("table"), th = el("tr");
     th.append(el("th", "", "Item"));
     res.colunas.forEach((c) => th.append(el("th", "", c.nome)));
@@ -2539,6 +2581,28 @@ body.card-on #confirm { visibility: hidden; }
       v.textContent = "Só encontrei um supermercado por perto.";
     }
     box.append(v);
+    // relação dos mercados (total + rota) e mapa com o total de cada um; o mais barato em verde
+    const melhorK = B && ambos > 0 && Math.abs(somaA - somaB) >= 0.01 ? (somaA < somaB ? 0 : 1) : -1;
+    const pts = res.colunas.map((c, k) => ({
+      id: c.id, loja: c.nome, lat: c.lat, lon: c.lon, dist: c.dist, val: tot[k].n ? tot[k].soma : null,
+      rotulo: tot[k].n ? fmt(tot[k].soma) : "sem preço", sub: shortName(c.nome) + " · " + tot[k].n + "/" + res.itens.length,
+      melhor: k === melhorK
+    }));
+    pts.forEach((p, k) => {
+      const li = el("li");
+      const t = el("div", "t");
+      t.append(el("b", "", p.loja), el("small", "", kmTxt(p.dist) + " · " + tot[k].n + " de " + res.itens.length + " itens com preço"));
+      if (p.lat != null) t.onclick = () => abrirLojaMapa(p);
+      li.append(t, el("span", "tot" + (p.melhor ? " best" : ""), p.val != null ? fmt(p.val) : "-"));
+      if (p.lat != null && p.lon != null) li.append(navLink(p));
+      ulMk.append(li);
+    });
+    if (divMapa) {
+      const comPos = pts.filter((p) => p.lat != null && p.lon != null);
+      desenharLista = () => desenharMapa(divMapa, comPos, (p) => abrirLojaMapa(p), "lista",
+        { fixo: true, ampliar: () => abrirMapaMercados("Mercados da sua lista", comPos, "O total de cada mercado soma só os itens com preço encontrado.") });
+      if (!$("listScreen").hidden) desenharLista();
+    } else desenharLista = null;
     const erros = res.colunas.filter((c) => c.erro === "limite");
     if (erros.length) box.append(el("p", "fine", "Limite gratuito de buscas na internet atingido: alguns itens podem ter ficado sem preço. Tente mais tarde."));
     res.colunas.filter((c) => c.erro && c.erro !== "limite").forEach((c) => {
@@ -2570,7 +2634,7 @@ body.card-on #confirm { visibility: hidden; }
     li.append(el("span", "meta", meta));
     const acts = el("div", "acts");
     acts.append(el("span", "pill" + (x.web ? " warn" : ""), x.fonte));
-    if (x.lat != null && x.lon != null) acts.append(navLink(x, "pill gray"));
+    if (x.lat != null && x.lon != null) acts.append(navLink(x));
     li.append(acts);
     return li;
   }
@@ -2906,7 +2970,8 @@ body.card-on #confirm { visibility: hidden; }
     js: "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js", jsSri: "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=",
     css: "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css", cssSri: "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
   };
-  let lfPromise = null, mapa = null, historicoBase = [];
+  let lfPromise = null, historicoBase = [];
+  const mapas = {};              // um mapa por lugar: sheet (ficha), home (início), lista (cotação)
   function carregarMapa() {
     if (window.L) return Promise.resolve(window.L);
     if (lfPromise) return lfPromise;
@@ -2934,13 +2999,24 @@ body.card-on #confirm { visibility: hidden; }
   const kmTxt = (d) => (d == null ? "" : d < 1000 ? Math.round(d) + " m" : (d / 1000).toFixed(1).replace(".", ",") + " km");
 
   // Desenha o mapa com um pino-etiqueta por loja (preço em amarelo; o menor, em verde) e a posição da pessoa.
-  async function desenharMapa(div, pontos, onPin) {
+  // opt.fixo: mapa dentro da página (no celular não arrasta, para não atrapalhar a rolagem); tocar nele amplia.
+  async function desenharMapa(div, pontos, onPin, slot, opt) {
+    slot = slot || "sheet"; opt = opt || {};
     let L;
     try { L = await carregarMapa(); }
     catch (e) { div.classList.add("off"); div.textContent = "Não consegui carregar o mapa agora. Confira a internet."; return; }
     if (!div.isConnected) return;
-    if (mapa) { mapa.remove(); mapa = null; }
-    mapa = L.map(div, { zoomControl: true, attributionControl: true });
+    if (mapas[slot]) { mapas[slot].remove(); mapas[slot] = null; }
+    div.classList.remove("off");
+    div.textContent = "";
+    const toque = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+    const travado = !!opt.fixo && toque;
+    const mapa = L.map(div, { zoomControl: true, attributionControl: true, dragging: !travado, tap: !travado, scrollWheelZoom: !opt.fixo, touchZoom: !travado, doubleClickZoom: !travado });
+    mapas[slot] = mapa;
+    if (opt.ampliar) {
+      div.append(el("span", "amp", "Toque para ampliar"));
+      mapa.on("click", () => opt.ampliar());
+    }
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
     }).addTo(mapa);
@@ -2948,12 +3024,12 @@ body.card-on #confirm { visibility: hidden; }
     const comPreco = pontos.filter((p) => p.val > 0);
     const menor = comPreco.length > 1 ? Math.min(...comPreco.map((p) => p.val)) : null;
     pontos.forEach((p) => {
-      const tg = el("span", "tg", p.val > 0 ? fmt(p.val).replace("R$ ", "R$ ") : "sem preço");
-      tg.append(el("small", "", shortName(p.loja)));
-      const cls = "pinp" + (p.aqui ? " aqui" : !(p.val > 0) ? " none" : p.val === menor ? " best" : "");
+      const tg = el("span", "tg", p.rotulo != null ? p.rotulo : p.val > 0 ? fmt(p.val).replace("R$ ", "R$ ") : "sem preço");
+      tg.append(el("small", "", p.sub != null ? p.sub : shortName(p.loja)));
+      const cls = "pinp" + (p.mk ? " mk" + (p.fav ? " fav" : "") : p.aqui ? " aqui" : !(p.val > 0) ? " none" : (p.melhor || (p.melhor === undefined && p.val === menor)) ? " best" : "");
       const icon = L.divIcon({ className: cls, html: tg, iconSize: [0, 0], iconAnchor: [0, 0] });
       const mk = L.marker([p.lat, p.lon], { icon, title: p.loja, keyboard: true, zIndexOffset: p.val === menor ? 500 : 0 }).addTo(mapa);
-      if (onPin) mk.on("click", () => onPin(p));
+      if (onPin) mk.on("click", (ev) => { if (ev.originalEvent) L.DomEvent.stopPropagation(ev.originalEvent); onPin(p); });
       lim.push([p.lat, p.lon]);
     });
     if (ultimaPos) {
@@ -2962,7 +3038,11 @@ body.card-on #confirm { visibility: hidden; }
     }
     if (lim.length > 1) mapa.fitBounds(lim, { padding: [46, 46], maxZoom: 16 });
     else if (lim.length) mapa.setView(lim[0], 15);
-    setTimeout(() => { if (mapa) mapa.invalidateSize(); }, 260);
+    setTimeout(() => {
+      if (mapas[slot] !== mapa || !div.isConnected) return;
+      mapa.invalidateSize();
+      if (lim.length > 1) mapa.fitBounds(lim, { padding: [46, 46], maxZoom: 16 });
+    }, 260);
   }
 
   function abrirSheet(rotulo) {
@@ -2976,7 +3056,8 @@ body.card-on #confirm { visibility: hidden; }
   }
   function fecharSheet() {
     $("sheet").hidden = true; $("sheetBg").hidden = true;
-    if (mapa) { mapa.remove(); mapa = null; }
+    if (mapas.sheet) { mapas.sheet.remove(); mapas.sheet = null; }
+    if (!$("homeScreen").hidden && inicioPts) desenharInicio();
     sheetOpen = !$("mktScreen").hidden || !$("savedScreen").hidden;
   }
   $("shClose").onclick = fecharSheet;
@@ -2999,6 +3080,92 @@ body.card-on #confirm { visibility: hidden; }
     const leg = el("p", "fine", pts.length + (pts.length === 1 ? " local com endereço no mapa." : " locais com endereço no mapa.") + " Preços da internet sem loja física não aparecem aqui.");
     b.append(leg);
     desenharMapa(div, pts, (p) => abrirDetalhe(p, lista));
+  }
+
+  // ---------- Mapa fixo da tela inicial: supermercados perto de você ----------
+  let inicioPts = null, inicioT = 0, inicioRodando = false;
+  async function mapaInicio(force) {
+    const div = $("homeMap"), ul = $("homeMkts");
+    if (!div) return;
+    if (!force && inicioPts && Date.now() - inicioT < 10 * 60e3) { desenharInicio(); return; }
+    if (inicioRodando) return;
+    inicioRodando = true;
+    $("homeMapRetry").hidden = true;
+    try {
+      if (!inicioPts) { if (mapas.home) { mapas.home.remove(); mapas.home = null; } div.classList.add("off"); div.textContent = "Localizando mercados perto de você…"; }
+      const pos = await pegarPosicao();
+      if (!pos) {
+        if (!inicioPts) { div.classList.add("off"); div.textContent = "Permita a localização para este site e veja aqui os mercados perto de você."; }
+        $("homeMapRetry").hidden = false;
+        return;
+      }
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      ultimaPos = { lat, lon };
+      let lista = await mercadosPerto(lat, lon, 3000, true);
+      if (lista.length < 3) lista = await mercadosPerto(lat, lon, 8000, true);
+      const fav = lerFavoritos();
+      inicioPts = lista.slice(0, 12).map((m) => ({ mk: true, id: m.id, loja: m.nome, lat: m.lat, lon: m.lon, dist: m.dist, rotulo: shortName(m.nome), sub: kmTxt(m.dist), fav: !!fav[m.id] }));
+      inicioT = Date.now();
+      if (!inicioPts.length) { div.classList.add("off"); div.textContent = "Nenhum supermercado encontrado no mapa perto de você."; ul.textContent = ""; return; }
+      desenharInicio();
+    } finally { inicioRodando = false; }
+  }
+  function desenharInicio() {
+    const div = $("homeMap"), ul = $("homeMkts");
+    if ($("homeScreen").hidden || !inicioPts) return;
+    const fav = lerFavoritos();
+    inicioPts.forEach((p) => { p.fav = !!fav[p.id]; });
+    desenharMapa(div, inicioPts, (p) => abrirLojaMapa(p), "home", { fixo: true, ampliar: () => abrirMapaMercados("Mercados perto de você", inicioPts) });
+    ul.textContent = "";
+    inicioPts.slice(0, 4).forEach((p) => {
+      const li = el("li");
+      const t = el("div", "t");
+      t.append(el("b", "", (p.fav ? "★ " : "") + p.loja), el("small", "", kmTxt(p.dist)));
+      t.onclick = () => abrirLojaMapa(p);
+      li.append(t, navLink(p));
+      ul.append(li);
+    });
+  }
+  $("homeMapMore").onclick = () => { if (inicioPts && inicioPts.length) abrirMapaMercados("Mercados perto de você", inicioPts); else mapaInicio(true); };
+  $("homeMapRetry").onclick = () => mapaInicio(true);
+
+  // Mapa grande (pode arrastar e dar zoom), na folha que sobe de baixo.
+  function abrirMapaMercados(titulo, pts, nota) {
+    const b = abrirSheet(titulo);
+    b.append(el("h2", "", titulo), el("p", "fine", nota || "Toque num mercado para ver a distância, marcar como favorito ou traçar a rota."));
+    const div = el("div", "mapa alto");
+    b.append(div);
+    desenharMapa(div, pts, (p) => abrirLojaMapa(p));
+  }
+  // Ficha do mercado: mapa, distância, favorito e rota (botão grande).
+  function abrirLojaMapa(p) {
+    const b = abrirSheet(p.loja);
+    b.append(el("h2", "", p.loja));
+    const dist = p.dist != null ? p.dist : ultimaPos && p.lat != null ? distM(ultimaPos.lat, ultimaPos.lon, p.lat, p.lon) : null;
+    if (p.val > 0) b.append(el("p", "fine", "Total da lista neste mercado: " + fmt(p.val)));
+    if (p.lat != null && p.lon != null) {
+      const div = el("div", "mapa");
+      b.append(div);
+      desenharMapa(div, [Object.assign({}, p, { mk: true, rotulo: shortName(p.loja), sub: dist != null ? kmTxt(dist) : "" })]);
+    }
+    const lj = el("div", "loja");
+    const t = el("div", "t");
+    t.append(el("b", "", p.loja), el("small", "", dist != null ? kmTxt(dist) + " de distância" : " "));
+    lj.append(t);
+    if (p.id) {
+      const st = el("button", "star", "★");
+      st.type = "button";
+      const marcar = (on) => { st.setAttribute("aria-pressed", on ? "true" : "false"); st.setAttribute("aria-label", on ? "Tirar dos favoritos" : "Marcar como favorito"); };
+      marcar(!!lerFavoritos()[p.id]);
+      st.onclick = () => { alternarFavorito({ id: p.id, nome: p.loja, lat: p.lat, lon: p.lon }); marcar(!!lerFavoritos()[p.id]); };
+      lj.append(st);
+    }
+    b.append(lj);
+    if (p.lat != null && p.lon != null) {
+      const rota = el("a", "btn amar", "Traçar rota até o mercado");
+      rota.href = rotaUrl(p.lat, p.lon); rota.target = "_blank"; rota.rel = "noopener";
+      b.append(rota);
+    }
   }
 
   // Ficha do preço: valor, comparação com a média, mapa da loja, favorito, histórico, lista e rota.
