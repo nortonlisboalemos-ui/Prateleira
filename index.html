@@ -363,6 +363,11 @@ body.card-on #confirm { visibility: hidden; }
 #mktList button.pick { flex: 1; border-color: var(--line); background: var(--surface); color: var(--tx); }
 #mktList button.pick[aria-current="true"] { border-color: var(--pri); box-shadow: 0 0 0 1px var(--pri) inset; }
 #mktList .km { color: var(--tx2); }
+.gmapa { width: 100%; height: 320px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: #e9eeeb; flex: none; }
+.gmapa iframe { width: 100%; height: 100%; border: 0; display: block; }
+.gbtn { align-self: flex-end; color: var(--pri); font: 600 15px var(--font-body); text-decoration: none; padding: 2px 4px; }
+#mktList li .go { margin-left: 0; align-self: center; }
+#mktList .pick.ver { cursor: default; }
 #mktList button.star { flex: none; width: 48px; justify-content: center; border-color: var(--line); background: var(--surface); color: #b9c2bd; font-size: 22px; padding: 0; }
 #mktList button.star[aria-pressed="true"] { color: #e0a100; }
 #mktList .sub { font-size: 12px; color: var(--tx2); font-weight: 400; display: block; }
@@ -469,7 +474,7 @@ body.card-on #confirm { visibility: hidden; }
 <div class="top">
   <div class="lt">
     <button type="button" id="homeBtn" class="homeb" aria-label="Voltar ao início">‹ Início</button>
-    <span class="brand">Prateleira<span class="ver">v19</span></span>
+    <span class="brand">Prateleira<span class="ver">v20</span></span>
   </div>
   <div class="seg" role="group" aria-label="Modo da IA">
     <button type="button" id="mFast" aria-pressed="true">Rápido</button>
@@ -496,7 +501,7 @@ body.card-on #confirm { visibility: hidden; }
 
 <section class="screen" id="homeScreen" hidden>
   <header class="hd">
-    <div class="kick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Prateleira <span class="ver">v19</span></div>
+    <div class="kick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Prateleira <span class="ver">v20</span></div>
     <h1>Aponte. Compare. Economize.</h1>
   </header>
   <button type="button" class="hero" id="goShelf" aria-label="Consultar prateleira com a câmera">
@@ -517,18 +522,12 @@ body.card-on #confirm { visibility: hidden; }
       <span class="cta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Abrir câmera</span>
     </span>
   </button>
-  <section class="block" id="homeMapBlock">
-    <div class="rowlink"><h2>Mercados perto de você</h2><button type="button" id="homeMapMore">Ampliar mapa</button></div>
-    <div class="mapa fixo off" id="homeMap">Localizando mercados perto de você…</div>
-    <ul class="mklist" id="homeMkts"></ul>
-    <button type="button" class="ghostlink" id="homeMapRetry" hidden>Tentar localizar de novo</button>
-  </section>
   <section class="block">
     <h2>Mais formas de comparar</h2>
     <div class="rows">
       <button class="row1" type="button" id="goList"><span class="ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2 3h3l2.6 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.5L22 8H6"/></svg></span><span class="t"><b>Lista de compras</b><small>fale ou digite os itens e veja qual mercado sai mais barato</small></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
       <button class="row1" type="button" id="goCupom"><span class="ic o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></span><span class="t"><b>Ler cupom fiscal</b><small>fotografe a nota e os preços entram na base</small></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
-      <button class="row1" type="button" id="goMkt"><span class="ic p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg></span><span class="t"><b>Mercados</b><small>favoritos e próximos de você</small></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+      <button class="row1" type="button" id="goMkt"><span class="ic p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg></span><span class="t"><b>Mercados</b><small>mapa dos mercados próximos, rota e favoritos</small></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
     </div>
   </section>
   <section class="block">
@@ -606,6 +605,8 @@ body.card-on #confirm { visibility: hidden; }
 
 <section class="screen" id="mktScreen" hidden>
   <div class="bar"><button type="button" class="back" id="mktBack" aria-label="Voltar">‹</button><h1>Mercados</h1></div>
+  <div class="gmapa" id="mktMapWrap" hidden><iframe id="mktMap" title="Mapa do Google com supermercados perto de você" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe></div>
+  <a class="gbtn" id="mktGmaps" target="_blank" rel="noopener" hidden>Abrir no Google Maps ›</a>
   <p class="muted" id="mktInfo">Os preços que você registrar ficam ligados ao mercado escolhido. Toque na estrela para marcar favoritos: eles têm prioridade nas comparações.</p>
   <ul id="mktList"></ul>
   <form id="mktForm" class="addrow">
@@ -1682,7 +1683,6 @@ body.card-on #confirm { visibility: hidden; }
     if (id === "homeScreen") renderHome();
     if (id === "listScreen") renderList();
     $(id).scrollTop = 0;
-    if (id === "homeScreen") setTimeout(() => mapaInicio(false), 0);
     if (id === "listScreen" && desenharLista) setTimeout(desenharLista, 0);
   }
   function showHome() { go("homeScreen"); }
@@ -1692,7 +1692,7 @@ body.card-on #confirm { visibility: hidden; }
   $("goShelf").onclick = startCamera;
   $("goList").onclick = () => go("listScreen");
   $("goCupom").onclick = () => go("cupomScreen");
-  $("goMkt").onclick = () => { abrirMercado(); if (!perto.length) detectarMercado(true); };
+  $("goMkt").onclick = () => abrirMercado("ver");
   $("homeSaved").onclick = showSaved;
   $("homeBtn").onclick = showHome;
   $("startHome").onclick = showHome;
@@ -1913,7 +1913,7 @@ body.card-on #confirm { visibility: hidden; }
   const BASE = { projectId: "", apiKey: "" };
   const baseOn = () => !!(BASE.projectId && BASE.apiKey);
   const FS = () => "https://firestore.googleapis.com/v1/projects/" + BASE.projectId + "/databases/(default)/documents";
-  const APP_VER = "v19";
+  const APP_VER = "v20";
 
   const norm = (s) => plain(s).replace(/[^a-z0-9]+/g, " ").trim();
   function tamanhoN(s) {
@@ -2276,32 +2276,69 @@ body.card-on #confirm { visibility: hidden; }
     if (cameraOn) carregarVizinhos(true);
     listarMercados();
   }
+  // Tela Mercados tem dois usos: "ver" (aberta pelo Início: mapa do Google, lista e rota)
+  // e "escolher" (pela câmera ou pelo cupom: tocar define o mercado onde a pessoa está).
+  let mktModo = "escolher";
+  let pertoVer = [], verRodando = false;
+  async function carregarVer(force) {
+    if (verRodando) return;
+    if (!force && pertoVer.length) { listarMercados(); return; }
+    verRodando = true;
+    $("mktInfo").textContent = "Localizando supermercados perto de você…";
+    try {
+      const pos = await pegarPosicao();
+      if (!pos) { $("mktInfo").textContent = "Permita a localização para este site e toque em Localizar de novo."; mostrarMapaGoogle(); return; }
+      ultimaPos = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      let l = await mercadosPerto(ultimaPos.lat, ultimaPos.lon, 3000, true);
+      if (l.length < 3) l = await mercadosPerto(ultimaPos.lat, ultimaPos.lon, 8000, true);
+      pertoVer = l.slice(0, 15);
+      listarMercados();
+    } finally { verRodando = false; }
+  }
+  // Mapa do Google dentro do app, na versão simples (sem chave e sem cadastro), buscando "supermercados" perto da pessoa.
+  let gmapSrc = "";
+  function mostrarMapaGoogle() {
+    const ver = mktModo === "ver";
+    if (!ver || !ultimaPos) { $("mktMapWrap").hidden = true; $("mktGmaps").hidden = true; return; }
+    const ll = ultimaPos.lat.toFixed(5) + "," + ultimaPos.lon.toFixed(5);
+    const src = "https://maps.google.com/maps?q=supermercado&ll=" + ll + "&sll=" + ll + "&z=15&hl=pt-BR&output=embed";
+    if (src !== gmapSrc) { gmapSrc = src; $("mktMap").src = src; }
+    $("mktGmaps").href = "https://www.google.com/maps/search/supermercados/@" + ll + ",15z";
+    $("mktMapWrap").hidden = false; $("mktGmaps").hidden = false;
+  }
   function listarMercados() {
     const ul = $("mktList");
     ul.textContent = "";
+    const ver = mktModo === "ver";
+    const base = (ver ? pertoVer : perto).slice(0, ver ? 15 : 10);
     const fav = lerFavoritos();
-    const ids = new Set(perto.slice(0, 10).map((m) => m.id));
+    const ids = new Set(base.map((m) => m.id));
     const favFora = Object.values(fav).filter((m) => !ids.has(m.id)).map((m) => Object.assign({}, m, { dist: ultimaPos && m.lat != null ? distM(ultimaPos.lat, ultimaPos.lon, m.lat, m.lon) : null }));
-    const lista = perto.slice(0, 10).filter((m) => fav[m.id]).concat(favFora, perto.slice(0, 10).filter((m) => !fav[m.id]));
+    let lista = base.filter((m) => fav[m.id]).concat(favFora, base.filter((m) => !fav[m.id]));
+    if (ver) lista = lista.sort((a, b) => (fav[b.id] ? 1 : 0) - (fav[a.id] ? 1 : 0) || (a.dist == null ? 1e9 : a.dist) - (b.dist == null ? 1e9 : b.dist));
     lista.forEach((m) => {
       const li = el("li");
-      const b = el("button", "pick");
+      const b = el("button", "pick" + (ver ? " ver" : ""));
       b.type = "button";
       b.setAttribute("aria-current", mercado && mercado.id === m.id ? "true" : "false");
       const nm = el("span", "", m.nome);
       if (mercado && mercado.id === m.id) nm.append(el("span", "sub", "você está aqui"));
       b.append(nm, el("span", "km", m.dist == null ? "" : m.dist < 1000 ? Math.round(m.dist) + " m" : (m.dist / 1000).toFixed(1).replace(".", ",") + " km"));
-      b.onclick = () => usarMercado(m);
+      if (ver) { if (m.lat != null) b.onclick = () => window.open(rotaUrl(m.lat, m.lon), "_blank", "noopener"); }
+      else b.onclick = () => usarMercado(m);
       const st = el("button", "star", "★");
       st.type = "button";
       st.setAttribute("aria-pressed", fav[m.id] ? "true" : "false");
       st.setAttribute("aria-label", (fav[m.id] ? "Tirar dos favoritos: " : "Marcar como favorito: ") + m.nome);
       st.onclick = () => alternarFavorito(m);
-      li.append(b, st); ul.append(li);
+      li.append(b, st);
+      if (ver && m.lat != null && m.lon != null) li.append(navLink({ lat: m.lat, lon: m.lon, loja: m.nome }));
+      ul.append(li);
     });
-    $("mktInfo").textContent = lista.length
-      ? "Toque no mercado onde você está. A estrela marca favoritos: eles têm prioridade nas comparações."
-      : "Toque em Localizar de novo ou digite o nome do mercado.";
+    $("mktInfo").textContent = ver
+      ? (lista.length ? "Supermercados perto de você. Toque em Ir para a rota no Google Maps; a estrela marca favoritos." : "Nenhum supermercado encontrado perto de você. Toque em Localizar de novo.")
+      : (lista.length ? "Toque no mercado onde você está. A estrela marca favoritos: eles têm prioridade nas comparações." : "Toque em Localizar de novo ou digite o nome do mercado.");
+    mostrarMapaGoogle();
   }
   // Escolha feita na tela de mercados: vale para o mercado atual ou, se aberta pelo cupom, para o cupom.
   function usarMercado(m) {
@@ -2309,12 +2346,17 @@ body.card-on #confirm { visibility: hidden; }
     else definirMercado(m);
     fecharMercado();
   }
-  function abrirMercado() { sheetOpen = true; listarMercados(); $("mktScreen").hidden = false; }
+  function abrirMercado(modo) {
+    mktModo = modo === "ver" ? "ver" : "escolher";
+    $("mktForm").hidden = mktModo === "ver";
+    sheetOpen = true; listarMercados(); $("mktScreen").hidden = false; $("mktScreen").scrollTop = 0;
+    if (mktModo === "ver") carregarVer(false);
+  }
   function fecharMercado() { $("mktScreen").hidden = true; sheetOpen = false; escolhaPara = null; }
-  $("mktBtn").onclick = abrirMercado;
+  $("mktBtn").onclick = () => abrirMercado("escolher");
   $("mktClose").onclick = fecharMercado;
   $("mktBack").onclick = fecharMercado;
-  $("mktLocate").onclick = () => { $("mktInfo").textContent = "Localizando…"; detectarMercado(true); };
+  $("mktLocate").onclick = () => { if (mktModo === "ver") { carregarVer(true); return; } $("mktInfo").textContent = "Localizando…"; detectarMercado(true); };
   $("mktForm").addEventListener("submit", (e) => {
     e.preventDefault();
     const nome = $("mktInput").value.trim();
@@ -3097,7 +3139,6 @@ body.card-on #confirm { visibility: hidden; }
   function fecharSheet() {
     $("sheet").hidden = true; $("sheetBg").hidden = true;
     if (mapas.sheet) { mapas.sheet.remove(); mapas.sheet = null; }
-    if (!$("homeScreen").hidden && inicioPts) desenharInicio();
     sheetOpen = !$("mktScreen").hidden || !$("savedScreen").hidden;
   }
   $("shClose").onclick = fecharSheet;
@@ -3122,52 +3163,6 @@ body.card-on #confirm { visibility: hidden; }
     desenharMapa(div, pts, (p) => abrirDetalhe(p, lista));
   }
 
-  // ---------- Mapa fixo da tela inicial: supermercados perto de você ----------
-  let inicioPts = null, inicioT = 0, inicioRodando = false;
-  async function mapaInicio(force) {
-    const div = $("homeMap"), ul = $("homeMkts");
-    if (!div) return;
-    if (!force && inicioPts && Date.now() - inicioT < 10 * 60e3) { desenharInicio(); return; }
-    if (inicioRodando) return;
-    inicioRodando = true;
-    $("homeMapRetry").hidden = true;
-    try {
-      if (!inicioPts) { if (mapas.home) { mapas.home.remove(); mapas.home = null; } div.classList.add("off"); div.textContent = "Localizando mercados perto de você…"; }
-      const pos = await pegarPosicao();
-      if (!pos) {
-        if (!inicioPts) { div.classList.add("off"); div.textContent = "Permita a localização para este site e veja aqui os mercados perto de você."; }
-        $("homeMapRetry").hidden = false;
-        return;
-      }
-      const lat = pos.coords.latitude, lon = pos.coords.longitude;
-      ultimaPos = { lat, lon };
-      let lista = await mercadosPerto(lat, lon, 3000, true);
-      if (lista.length < 3) lista = await mercadosPerto(lat, lon, 8000, true);
-      const fav = lerFavoritos();
-      inicioPts = lista.slice(0, 12).map((m) => ({ mk: true, id: m.id, loja: m.nome, lat: m.lat, lon: m.lon, dist: m.dist, rotulo: shortName(m.nome), sub: kmTxt(m.dist), fav: !!fav[m.id] }));
-      inicioT = Date.now();
-      if (!inicioPts.length) { div.classList.add("off"); div.textContent = "Nenhum supermercado encontrado no mapa perto de você."; ul.textContent = ""; return; }
-      desenharInicio();
-    } finally { inicioRodando = false; }
-  }
-  function desenharInicio() {
-    const div = $("homeMap"), ul = $("homeMkts");
-    if ($("homeScreen").hidden || !inicioPts) return;
-    const fav = lerFavoritos();
-    inicioPts.forEach((p) => { p.fav = !!fav[p.id]; });
-    desenharMapa(div, inicioPts, (p) => abrirLojaMapa(p), "home", { fixo: true, ampliar: () => abrirMapaMercados("Mercados perto de você", inicioPts) });
-    ul.textContent = "";
-    inicioPts.slice(0, 4).forEach((p) => {
-      const li = el("li");
-      const t = el("div", "t");
-      t.append(el("b", "", (p.fav ? "★ " : "") + p.loja), el("small", "", kmTxt(p.dist)));
-      t.onclick = () => abrirLojaMapa(p);
-      li.append(t, navLink(p));
-      ul.append(li);
-    });
-  }
-  $("homeMapMore").onclick = () => { if (inicioPts && inicioPts.length) abrirMapaMercados("Mercados perto de você", inicioPts); else mapaInicio(true); };
-  $("homeMapRetry").onclick = () => mapaInicio(true);
 
   // Mapa grande (pode arrastar e dar zoom), na folha que sobe de baixo.
   function abrirMapaMercados(titulo, pts, nota) {
